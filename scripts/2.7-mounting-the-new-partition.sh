@@ -39,6 +39,9 @@ fi
 if [[ -n "$SOURCES" ]];then    
     [[ -z "$(mount | grep $LFS/sources)" ]] &&
         sudo mount --bind ${SOURCES} $LFS/sources;
-    export SOURCES
+    # symlink $LFS/sources/ to /sources
+    if [[ ! -e /sources ]];then
+        sudo ln -sv $LFS/sources /
+    fi
 fi
 sudo chmod a+wt $LFS/sources
