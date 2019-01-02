@@ -1,8 +1,12 @@
 #!/bin/bash
 set -ex
 
-. settings.conf
+[ -z ${SCRIPTDIR} ] &&
+    SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export SCRIPTDIR
 
+. settings.conf
+export MAKEFLAGS BUILDDIR LFS SOURCES
 # check host system requirement
 bash scripts/2.2-host-system-requirements.sh 
 
