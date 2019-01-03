@@ -38,8 +38,11 @@ sudo chmod 777 $BUILDDIR/.env
 echo "SCRIPTDIR=$SCRIPTDIR" > $BUILDDIR/.env
 echo "MAKEFLAGS=\"$MAKEFLAGS\"" >> $BUILDDIR/.env
 echo "BUILDDIR=$BUILDDIR" >> $BUILDDIR/.env
+if [[ -n "${TEST}" ]] && [[ ${TEST} -ne 0 ]];then
+    echo "TEST=$TEST" >> $BUILDDIR/.env
+fi
 
-
+# Constructing a Temporary System
 # as lfs user
 [[ ! -f /sources/build/.strip-done ]] &&
     su -c "${SCRIPTDIR}/scripts/toolchain/make-toolchain.sh" lfs
