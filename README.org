@@ -389,7 +389,7 @@ AddressFamily inet
 #+END_SRC
        With avahi (on both host and vm) enabled you can ssh with =ssh root@lfs.local=.
        And for powering off the vm, use /VBoxManage controlvm linuxfromscratch poweroff/. At this point it's better to create a backup copy
-       of =~/VBoxVM/lfs.vdi= just in case...
+       of =~/VBoxVM/lfs.vdi= just in case, and the actual ~/mnt/lfs~ + ~/mnt/virtual~ content can be removed.
 **** TODO Personalize kernel configuration
 The kernel configuration [[file:scripts/chroot/8.3-linux.sh][created earlier]], was based off default x86 defconfig. Many of those
 configurations are not used in every machine.
