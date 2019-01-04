@@ -365,7 +365,7 @@ rm -rf $BUILDDIR/*
 /etc/rc.d/init.d/avahi start
        #+END_SRC
 
-       Edit /etc/ssh/sshd_config, add /PermitRootLogin yes/ to the bottom and restart sshd =/etc/rc.d/init.d/sshd restart=.
+       Edit /etc/ssh/sshd_config/, add /PermitRootLogin yes/ to the bottom and restart sshd =/etc/rc.d/init.d/sshd restart=.
        Copy your host ssh-key using =ssh-copy-id root@<ip-of-the-vm-lfs>=, after that you can ssh without password
        to the vm. And the /PermitRootLogin/ addition can now be removed for security.
 
