@@ -365,11 +365,11 @@ rm -rf $BUILDDIR/*
 /etc/rc.d/init.d/avahi start
        #+END_SRC
 
-       Edit /etc/ssh/sshd_config/, add /PermitRootLogin yes/ to the bottom and restart sshd =/etc/rc.d/init.d/sshd restart=.
-       Copy your host ssh-key using =ssh-copy-id root@<ip-of-the-vm-lfs>=, after that you can ssh without password
-       to the vm. And the /PermitRootLogin/ addition can now be removed for security.
+       Edit //etc/ssh/sshd_config/, add /PermitRootLogin yes/ to the bottom and restart sshd (=/etc/rc.d/init.d/sshd restart=).
+       Copy your host ssh-key using =ssh-copy-id root@<ip-of-the-vm-lfs>= (from host-machine), after that you can ssh without password
+       to the vm. And the /PermitRootLogin/ addition can now be removed from //etc/ssh/ssh_config/ for security.
 
-       Now shutdown the vm (type =init 0= from the command-line). Next time you want to start the vm, do it from
+       Now shutdown the vm. Next time you want to start the vm, do it from
        the command line:
 
        #+BEGIN_SRC shell
@@ -383,5 +383,10 @@ VBoxManage list vms
 VBoxManage startvm linuxfromscratch --type headless
        #+END_SRC
 
-       With avahi enabled you can ssh with /ssh root@lfs.local/, and for powering off use 
-       /VBoxManage controlvm linuxfromscratch poweroff/.
+       On the host machine edit //etc/ssh/sshd_config/ and add/edit:
+#+BEGIN_SRC example
+AddressFamily inet
+#+END_SRC
+       With avahi (on both host and vm) enabled you can ssh with =ssh root@lfs.local=.
+       And for powering off the vm, use /VBoxManage controlvm linuxfromscratch poweroff/. At this point it's better to create a backup copy
+       of =~/VBoxVM/lfs.vdi= just in case...
