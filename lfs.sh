@@ -159,3 +159,7 @@ EOF
 "
 
 sudo umount -Rv $LFS
+if [[ "-n ${SOURCES}" ]];then
+    rm $SOURCES/wget-list
+    rm $SOURCES/.lfs-wget-done
+fi
