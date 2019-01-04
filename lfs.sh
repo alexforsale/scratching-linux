@@ -87,7 +87,7 @@ chroot_lfs(){
 
 chroot_lfs /sources/scripts/chroot/6.5-Creating-directories.sh
 chroot_lfs /sources/scripts/chroot/6.6-Creating-essential-files-and-symlinks.sh
-exit
+
 # 6. Installing Basic System Software
 
 [[ ! -f $BUILDDIR/.chroot-bash-done ]] &&
