@@ -36,9 +36,11 @@ fi
 
 # sources dir
 [[ ! -d $LFS/sources ]] && sudo mkdir -pv $LFS/sources;
-if [[ -n "$SOURCES" ]];then    
-    [[ -z "$(mount | grep $LFS/sources)" ]] &&
-        sudo mount --bind ${SOURCES} $LFS/sources;
+if [[ -n "$SOURCES" ]];then
+    if [[ -n ${SOURCES} ]];then
+        [[ -z "$(mount | grep $LFS/sources)" ]] &&
+            sudo mount --bind ${SOURCES} $LFS/sources;
+    fi
     # symlink $LFS/sources/ to /sources
     if [[ ! -e /sources ]];then
         sudo ln -sv $LFS/sources /
