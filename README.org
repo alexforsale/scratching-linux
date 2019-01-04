@@ -16,11 +16,11 @@
 ** Configuration
    Basic configuration is inside settings.conf file, I mainly using vm for this so nothing complicated.
    Also note that I skipped the bootloader stuff in grub section.
-   - If you want to run "make check / test" set the TEST flag to "1".
-   - The BUILDDIR flag perhaps should be hardcoded.
+   - If you want to run "=make check= / =make test=" set the /TEST/ flag to "1".
+   - The /BUILDDIR/ flag perhaps should be hardcoded.
    - I choose btrfs since my entire disk is on btrfs, and creating / deleting subvolume is more easier. Note that
      I never user other fs type, so edit the script accordingly.
-   - The SOURCES flag is for storing the downloaded files to host.
+   - The /SOURCES/ flag is for storing the downloaded files to host.
 ** Moving $LFS to a virtual machine
    - Use [[https://wiki.archlinux.org/index.php/Moving_an_existing_install_into_(or_out_of)_a_virtual_machine][this]] for guide
    - Create the container
@@ -35,9 +35,9 @@ sudo fdisk /dev/loop1
    #+END_SRC
 
    I'm using /fdisk/ for partitioning, with gpt table you'd want the first partition to be a [[https://wiki.archlinux.org/index.php/GRUB#GUID_Partition_Table_.28GPT.29_specific_instructions][BIOS boot partition]],
-   with a suggested size 1MiB. Press m inside fdisk to see all available command. One thing to note if you want to
+   with a suggested size 1MiB. Press =m= inside fdisk to see all available command. One thing to note if you want to
    define the size of a partition, do so in the last sector, e.g. for 1MiB you type /+1M/, for 1GiB is /+1G/.
-   And for changing partition type, press t after creating the new partition, then you press L to list all available
+   And for changing partition type, press =t= after creating the new partition, then you press =L= to list all available
    partition type, for bios boot is /4/.
 
    I'm using single root partition and a swap, so my final partition layout is:
@@ -104,8 +104,8 @@ VBoxManage convertfromraw --format VDI /media/lfs.img ~/VBoxVM/lfs.vdi
 
    - From here connect the converted container to the vm using bootable linux live cd and chroot into the partition
      to create bootloader.
-     - For some linux live cd automatically put you in menu for installing(like minimal livecd and such), just move to
-       the next tty for chrooting to lfs partition(usually ALT+Right arrow to move to next tty or CTRL+ALT+2 to move to tty2)
+     - Some linux live cd automatically put you in menu for installing(like minimal livecd and such), just move to
+       the next tty for chrooting to lfs partition(usually =ALT+Right= arrow to move to next tty or =CTRL+ALT+F2= to move to tty2)
      - On some linux livecd, you could ssh immediately.
      - Inside the livecd command prompt, mount the lfs partition into a mountpoint
    #+BEGIN_SRC shell
@@ -150,9 +150,9 @@ EOF
 
 *** TODO Things to do inside VM [0/7]
 
-    For now editing text files is using vi.
+    For now editing text files is using /vi/.
 **** TODO set the terminal resolution [optional]
-     when booting up to grub, press /c/ for command-line mode:
+     when booting up to grub, press =c= for command-line mode:
 
      #+BEGIN_SRC 
 # inside grub cmdline
@@ -160,8 +160,8 @@ set pager=1 # like less
 vbeinfo 
      #+END_SRC
 
-     Note the desired resolution, e.g. /0x145/ for 1280x1024x32. Reset back the vm, still on the grub menu,
-     press /e/ for edit, append this line /vga=0x145/:
+     Note the desired resolution, e.g. /0x145/ for /1280x1024x32/. Reset back the vm, still on the grub menu,
+     press =e= for edit, append this line /vga=0x145/:
 
      #+BEGIN_SRC 
 linux   /boot/vmlinuz-4.18.5-lfs-8.3 root=/dev/sda3 ro vga=0x145
@@ -179,7 +179,7 @@ export LANG=en_US.UTF-8
 
 ****** TODO install dhcpcd
        from [[http://www.linuxfromscratch.org/blfs/view/stable/basicnet/dhcpcd.html][blfs]], You need to type everything manually, including url's so get use to it, at least until
-       sshfs is installed.
+       ssh is installed.
 
        #+BEGIN_SRC shell
 export BUILDDIR=/sources/build # location for downloaded tarballs
@@ -203,8 +203,8 @@ make install-service-dhcpcd
 popd
        #+END_SRC
 
-       In my vm the iface name is /enp0s3/ (use /ip link/ to see the interface) so //etc/sysconfig/ifconfig.enp0s3/ must be created,
-       see /man ifup/ for more configuration. The example //etc/sysconfig/ifconfig.eth0/ can be removed.
+       In my vm the iface name is /enp0s3/ (use =ip link= to see the interface) so //etc/sysconfig/ifconfig.enp0s3/ must be created,
+       see =man ifup= for more configuration. The example //etc/sysconfig/ifconfig.eth0/ can be removed.
 
        #+BEGIN_SRC
 ONBOOT=yes
@@ -297,7 +297,7 @@ rm -rf $BUILDDIR/*
 /etc/rc.d/init.d/sshd start
      #+END_SRC
 
-     Ssh from the host machine is now available.
+     Ssh from the host machine can now be done with =ssh root@<vm-ip-address>=.
 
 ***** Install avahi 
       - [[http://www.linuxfromscratch.org/blfs/view/stable/basicnet/avahi.html][source]]
@@ -365,11 +365,11 @@ rm -rf $BUILDDIR/*
 /etc/rc.d/init.d/avahi start
        #+END_SRC
 
-       Edit /etc/ssh/sshd_config, add /PermitRootLogin yes/ to the bottom and restart sshd //etc/rc.d/init.d/sshd restart/.
-       Copy your host ssh-key using /ssh-copy-id root@<ip-of-the-vm-lfs>/, after that you can ssh without password
+       Edit /etc/ssh/sshd_config, add /PermitRootLogin yes/ to the bottom and restart sshd =/etc/rc.d/init.d/sshd restart=.
+       Copy your host ssh-key using =ssh-copy-id root@<ip-of-the-vm-lfs>=, after that you can ssh without password
        to the vm. And the /PermitRootLogin/ addition can now be removed for security.
 
-       Now shutdown the vm (type /init 0/ from the command-line). Next time you want to start the vm, do it from
+       Now shutdown the vm (type =init 0= from the command-line). Next time you want to start the vm, do it from
        the command line:
 
        #+BEGIN_SRC shell
