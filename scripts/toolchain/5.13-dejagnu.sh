@@ -11,7 +11,7 @@ if [[ ! -f $BUILDDIR/.dejagnu-done ]];then
     ./configure --prefix=/tools
     make
     make install
-    [[ -n "${TEST}" ]] && make check
+    [[ ${TEST} -eq 1 ]] && make check
 
     cd $BUILDDIR
     rm -rf ${dejagnu/.tar*}

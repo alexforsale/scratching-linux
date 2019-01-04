@@ -13,7 +13,7 @@ if [[ ! -f $BUILDDIR/.make-done ]];then
     ./configure --prefix=/tools --without-guile
 
     make
-    [[ -n "${TEST}" ]] && make check
+    [[ ${TEST} -eq 1 ]] && make check
     make install
     
     cd $BUILDDIR

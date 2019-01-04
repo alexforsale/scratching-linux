@@ -11,7 +11,7 @@ if [[ ! -f $BUILDDIR/.bash-done ]];then
     ./configure --prefix=/tools --without-bash-malloc
 
     make
-    [[ -n "${TEST}" ]] && make tests
+    [[ ${TEST} -eq 1 ]] && make tests
     make install
 
     ln -sv bash /tools/bin/sh

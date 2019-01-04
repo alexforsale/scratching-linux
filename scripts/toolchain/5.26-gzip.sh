@@ -14,7 +14,7 @@ if [[ ! -f $BUILDDIR/.gzip-done ]];then
     ./configure --prefix=/tools
 
     make
-    [[ -n "${TEST}" ]] && make check
+    [[ ${TEST} -eq 1 ]] && make check
     make install
     
     cd $BUILDDIR

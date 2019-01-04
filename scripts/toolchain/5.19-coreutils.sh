@@ -10,7 +10,7 @@ if [[ ! -f $BUILDDIR/.coreutils-done ]];then
 
     ./configure --prefix=/tools --enable-install-program=hostname
     make
-    [[ -n "${TEST}" ]] && make RUN_EXPENSIVE_TESTS=yes check
+    [[ ${TEST} -eq 1 ]] && make RUN_EXPENSIVE_TESTS=yes check
     make install
 
     cd $BUILDDIR

@@ -13,7 +13,7 @@ if [[ ! -f $BUILDDIR/.tcl-done ]];then
 
     make
 
-    [[ -n "${TEST}" ]] && TZ=UTC make test
+    [[ ${TEST} -eq 1 ]] && TZ=UTC make test
 
     make install
 

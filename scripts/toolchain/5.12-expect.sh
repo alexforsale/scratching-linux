@@ -16,7 +16,7 @@ if [[ ! -f $BUILDDIR/.expect-done ]];then
                 --with-tclinclude=/tools/include
 
     make
-    [[ -n "${TEST}" ]] && make test
+    [[ ${TEST} -eq 1 ]] && make test
     make SCRIPTS="" install
 
     cd $BUILDDIR
