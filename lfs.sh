@@ -49,7 +49,7 @@ if [[ ! -f $SCRIPTDIR/tools.tar.xz ]];then
         su -c "${SCRIPTDIR}/scripts/toolchain/make-toolchain.sh" lfs
     fi
 elif [[ -f $SCRIPTDIR/tools.tar.xz ]];then
-    if [[ ! -f /sources/build/.strip-done ]];then
+    if [[ -f /sources/build/.strip-done ]];then
         pushd $LFS
         tar -xf $SCRIPTDIR/tools.tar.xz
     fi
@@ -162,5 +162,5 @@ sudo umount -Rv $LFS
 if [[ "-n ${SOURCES}" ]];then
     rm $SOURCES/wget-list
     rm $SOURCES/.lfs-wget-done
-    rm $BUILDDIR/.*
+    sudo rm $BUILDDIR/.*
 fi
