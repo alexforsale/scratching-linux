@@ -148,7 +148,7 @@ EOF
 
    - Poweroff the vm, remove the livecd and restart.
 
-*** TODO Things to do inside VM [0/7]
+*** TODO Things to do inside VM [0/9]
 
     For now editing text files is using /vi/.
 **** TODO set the terminal resolution [optional]
@@ -390,3 +390,12 @@ AddressFamily inet
        With avahi (on both host and vm) enabled you can ssh with =ssh root@lfs.local=.
        And for powering off the vm, use /VBoxManage controlvm linuxfromscratch poweroff/. At this point it's better to create a backup copy
        of =~/VBoxVM/lfs.vdi= just in case...
+**** TODO Personalize kernel configuration
+The kernel configuration [[file:scripts/chroot/8.3-linux.sh][created earlier]], was based off default x86 defconfig. Many of those
+configurations are not used in every machine.
+**** TODO explore BLFS
+There are lots of packages that are not included in the base lfs setup, and they're stored in
+[[http://www.linuxfromscratch.org/blfs/view/stable/general/libdaemon.html][Beyond Linux From Scratch separately]]. Just remember, most of the times to install a package you need
+to install dependency packages for said package(s), and sometimes that dependency package depends on the
+package you're about to install. For that you'll need to modify the make configurations and such, that makes
+the package needs to compile more than once.
