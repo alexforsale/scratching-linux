@@ -71,7 +71,7 @@ sudo mount -vt btrfs -o "defaults space_cache,compress,subvol=@lfs" /dev/sda7 /m
 # if you don't want to include the /tools dir, remove it here
    #+END_SRC
 
-   - put some tarballs for compiling at vm
+   - put some tarballs for compiling at vm, without these theres no way to connect inside the vm.
      - [[http://www.linuxfromscratch.org/blfs/view/stable/basicnet/dhcpcd.html][dhcpcd]]
      - [[http://www.linuxfromscratch.org/blfs/view/stable/basicnet/wget.html][wget]]
      - [[http://www.linuxfromscratch.org/blfs/view/stable/introduction/bootscripts.html][blfs-bootscripts]]
