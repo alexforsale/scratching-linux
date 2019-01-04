@@ -61,7 +61,7 @@ sudo chown -R root:root $LFS/tools
 # compress /tools for backup
 if [[ ! -f $SCRIPTDIR/tools.tar.xz ]];then
     pushd $LFS;
-    tar -cavf $SCRIPTDIR/tools-table.tar.xz tools
+    tar -cavf $SCRIPTDIR/tools.tar.xz tools
     popd
 fi
 
@@ -87,7 +87,7 @@ chroot_lfs(){
 
 chroot_lfs /sources/scripts/chroot/6.5-Creating-directories.sh
 chroot_lfs /sources/scripts/chroot/6.6-Creating-essential-files-and-symlinks.sh
-
+exit
 # 6. Installing Basic System Software
 
 [[ ! -f $BUILDDIR/.chroot-bash-done ]] &&
@@ -159,3 +159,8 @@ EOF
 "
 
 sudo umount -Rv $LFS
+if [[ "-n ${SOURCES}" ]];then
+    rm $SOURCES/wget-list
+    rm $SOURCES/.lfs-wget-done
+    rm $BUILDDIR/.*
+fi
