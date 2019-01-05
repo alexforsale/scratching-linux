@@ -65,7 +65,7 @@ if [[ ! -f $SCRIPTDIR/tools.tar.xz ]];then
     popd
 fi
 
-bash scripts/6.2-Preparing-kernel-filesystem.sh
+bash scripts/6.2-Preparing-virtual-kernel-filesystem.sh
 
 # mount the scripts folder
 [[ ! -d /sources/scripts ]] && mkdir -pv /sources/scripts
