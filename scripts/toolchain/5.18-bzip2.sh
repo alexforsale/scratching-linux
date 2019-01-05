@@ -8,7 +8,7 @@ if [[ ! -f $BUILDDIR/.bzip2-done ]];then
     tar -xf /sources/$bzip2
     cd ${bzip2/.tar*}
 
-    make
+    make -f Makefile-libbz2_so
     make PREFIX=/tools install
 
     cd $BUILDDIR
