@@ -1,0 +1,4 @@
+[submodule "recipes"]
+	path = recipes
+	url = git@github.com:alexforsale/cookbook-recipes.git
+	branch = master
