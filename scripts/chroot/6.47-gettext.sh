@@ -1,27 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-gettext-done ]];then
-    pushd $BUILDDIR
-    gettext=$(grep gettext- /sources/wget-list | grep tar | sed 's/^.*gettext-/gettext-/');
-    tar -xf /sources/$gettext;
-    cd ${gettext/.tar*}
+pathappend /tools/bin
 
-    sed -i '/^TESTS =/d' gettext-runtime/tests/Makefile.in
-    sed -i 's/test-lock..EXEEXT.//' gettext-tools/gnulib-tests/Makefile.in
-
-    sed -e '/AppData/{N;N;p;s/\.appdata\./.metainfo./}' \
-        -i gettext-tools/its/appdata.loc
-
-    ./configure --prefix=/usr --disable-static --docdir=/usr/share/doc/gettext-0.19.8.1
-    make
-    [[ ${TEST} -eq 1 ]] && make check
-    make install
-    chmod -v 0755 /usr/lib/preloadable_libintl.so
-    
-    cd $BUILDDIR
-    rm -rf ${gettext/.tar*}
-    popd
-    unset gettext
-    touch $BUILDDIR/.chroot-gettext-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/gettext
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/gettext
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

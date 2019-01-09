@@ -1,19 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-less-done ]];then
-    pushd $BUILDDIR
-    less=$(grep less- /sources/wget-list | grep tar | sed 's/^.*less-/less-/');
-    tar -xf /sources/$less;
-    cd ${less/.tar*}
+pathappend /tools/bin
 
-    ./configure --prefix=/usr --sysconfdir=/etc
-    make
-    make install
-    
-    cd $BUILDDIR
-    rm -rf ${less/.tar*}
-    popd
-    unset less
-    touch $BUILDDIR/.chroot-less-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/less
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/less
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

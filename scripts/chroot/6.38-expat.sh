@@ -1,23 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-expat-done ]];then
-    pushd $BUILDDIR
-    expat=$(grep expat- /sources/wget-list | grep tar | sed 's/^.*expat-/expat-/');
-    tar -xf /sources/$expat;
-    cd ${expat/.tar*}
+pathappend /tools/bin
 
-    sed -i 's|usr/bin/env |bin/|' run.sh.in
-
-    ./configure --prefix=/usr --disable-static --docdir=/usr/share/doc/expat-2.2.6
-    make
-    [[ ${TEST} -eq 1 ]] && make check
-    make install
-    install -v -m644 doc/*.{html,png,css} /usr/share/doc/expat-2.2.6
-
-    cd $BUILDDIR
-    rm -rf ${expat/.tar*}
-    popd
-    unset expat
-    touch $BUILDDIR/.chroot-expat-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/expat
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/expat
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

@@ -1,23 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-gzip-done ]];then
-    pushd $BUILDDIR
-    gzip=$(grep gzip- /sources/wget-list | grep tar | sed 's/^.*gzip-/gzip-/');
-    tar -xf /sources/$gzip;
-    cd ${gzip/.tar*}
+pathappend /tools/bin
 
-    sed -i 's/IO_ftrylockfile/IO_EOF_SEEN/' lib/*.c
-    echo "#define _IO_IN_BACKUP 0x100" >> lib/stdio-impl.h
-    ./configure --prefix=/usr
-    make
-    [[ ${TEST} -eq 1 ]] && make check
-    make install
-    mv -v /usr/bin/gzip /bin
-
-    cd $BUILDDIR
-    rm -rf ${gzip/.tar*}
-    popd
-    unset gzip
-    touch $BUILDDIR/.chroot-gzip-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/gzip
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/gzip
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

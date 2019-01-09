@@ -1,5 +1,5 @@
 #!/tools/bin/bash
-
+export PATH=$PATH:/tools/bin
 pushd /
 
 for f in bash cat dd echo ln pwd rm stty;do
@@ -88,4 +88,24 @@ touch /var/log/{btmp,lastlog,faillog,wtmp}
 chgrp -v utmp /var/log/lastlog
 chmod -v 664  /var/log/lastlog
 chmod -v 600  /var/log/btmp
+[[ ! -f /usr/bin/du ]] && ln -sv /tools/bin/du /usr/bin
+[[ ! -f /usr/bin/id ]] && ln -sv /tools/bin/id /usr/bin
 popd
+
+# create pacman repositories
+if [[ ! -f $BUILDDIR/.local-repo-done ]];then
+    pushd /srv/pacman/repos
+    repos=($(ls /srv/pacman/recipes))
+    for r in ${repos[@]};do
+        if [[ "${r}" != "scripts" ]];then
+            [[ ! -d "${r}" ]] && mkdir -pv "${r}"
+            pushd ${r};
+            if [[ ! -f "${r}".db.tar.gz ]];then
+                /tools/bin/repo-add "${r}".db.tar.gz
+            fi
+            popd
+        fi
+    done
+    popd
+    touch $BUILDDIR/.local-repo-done
+fi

@@ -1,17 +1,31 @@
 #!/tools/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-man-pages-done ]];then
-    pushd $BUILDDIR
-    man_pages=$(grep man-pages-4 /sources/wget-list | sed 's/^.*man-pages-4/man-pages-4/');
-    tar -xf /sources/$man_pages;
-    cd ${man_pages/.tar*}
-
-    make install
-
-    cd $BUILDDIR
-    rm -rf ${man_pages/.tar*}
-    popd
-    unset man_pages
-    touch $BUILDDIR/.chroot-man-pages-done
-fi
+pathappend /tools/bin
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/man-pages
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/man-pages
+        . PKGBUILD
+        popd
+        pacman -Syy &>/dev/null
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

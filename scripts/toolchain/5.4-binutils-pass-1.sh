@@ -9,9 +9,10 @@ if [[ ! -f $BUILDDIR/.binutils-pass-1-done ]];then
     mkdir -pv build && cd $_
     ../configure --prefix=/tools \
                  --with-sysroot=$LFS \
-                 --with-lib-path=/tools/lib \
+                 --with-lib-path=/tools/lib:/tools/lib32 \
                  --target=$LFS_TGT \
                  --disable-nls \
+                 --enable-multilib \
                  --disable-werror
     make
     case $(uname -m) in

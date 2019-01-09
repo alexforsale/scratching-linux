@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-. ~/.bashrc
+[[ -e ~/.bashrc ]] && . ~/.bashrc
 . /sources/build/.env
 
 bash "${SCRIPTDIR}/scripts/4.4-setting-up-the-environment.sh"
@@ -36,4 +36,5 @@ bash "${SCRIPTDIR}/scripts/toolchain/5.31-tar.sh"
 bash "${SCRIPTDIR}/scripts/toolchain/5.32-texinfo.sh"
 bash "${SCRIPTDIR}/scripts/toolchain/5.33-util-linux.sh"
 bash "${SCRIPTDIR}/scripts/toolchain/5.34-xz.sh"
+bash "${SCRIPTDIR}/scripts/toolchain/pacstuffs.sh"
 bash "${SCRIPTDIR}/scripts/toolchain/5.35-strip.sh"

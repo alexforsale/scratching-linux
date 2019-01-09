@@ -1,19 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-groff-done ]];then
-    pushd $BUILDDIR
-    groff=$(grep groff- /sources/wget-list | grep tar | sed 's/^.*groff-/groff-/');
-    tar -xf /sources/$groff;
-    cd ${groff/.tar*}
+pathappend /tools/bin
 
-    PAGE=A4 ./configure --prefix=/usr
-    make -j1
-    make install
-    
-    cd $BUILDDIR
-    rm -rf ${groff/.tar*}
-    popd
-    unset groff
-    touch $BUILDDIR/.chroot-groff-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/groff
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+#        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/groff
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

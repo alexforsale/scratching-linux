@@ -1,27 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-python-done ]];then
-    pushd $BUILDDIR
-    python=$(grep Python- /sources/wget-list | grep tar | sed 's/^.*Python-/Python-/');
-    tar -xf /sources/$python;
-    cd ${python/.tar*}
+pathappend /tools/bin
 
-    ./configure --prefix=/usr --enable-shared --with-system-expat --with-system-ffi --with-ensurepip=yes
-    make
-
-    make install
-    chmod -v 755 /usr/lib/libpython3.7m.so
-    chmod -v 755 /usr/lib/libpython3.so
-
-    install -v -dm755 /usr/share/doc/python-3.7.0/html 
-
-    tar --strip-components=1 --no-same-owner --no-same-permissions -C /usr/share/doc/python-3.7.0/html \
-        -xvf /sources/python-3.7.0-docs-html.tar.bz2
-
-    cd $BUILDDIR
-    rm -rf ${python/.tar*}
-    popd
-    unset python
-    touch $BUILDDIR/.chroot-python-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/python
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/python
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

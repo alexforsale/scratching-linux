@@ -1,25 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-openssl-done ]];then
-    pushd $BUILDDIR
-    openssl=$(grep openssl- /sources/wget-list | grep tar | sed 's/^.*openssl-/openssl-/');
-    tar -xf /sources/$openssl;
-    cd ${openssl/.tar*}
+pathappend /tools/bin
 
-    ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib shared zlib-dynamic
-    make
-    [[ ${TEST} -eq 1 ]] && make test
-
-    sed -i '/INSTALL_LIBS/s/libcrypto.a libssl.a//' Makefile
-    make MANSUFFIX=ssl install
-
-    mv -v /usr/share/doc/openssl /usr/share/doc/openssl-1.1.0i
-    cp -vfr doc/* /usr/share/doc/openssl-1.1.0i
-
-    cd $BUILDDIR
-    rm -rf ${openssl/.tar*}
-    popd
-    unset openssl
-    touch $BUILDDIR/.chroot-openssl-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/openssl
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/openssl
+         . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

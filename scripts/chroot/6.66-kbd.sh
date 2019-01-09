@@ -1,27 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-kbd-done ]];then
-    pushd $BUILDDIR
-    kbd=$(grep kbd- /sources/wget-list | grep tar | sed 's/^.*kbd-/kbd-/');
-    tar -xf /sources/$kbd;
-    cd ${kbd/.tar*}
+pathappend /tools/bin
 
-    patch -Np1 -i /sources/kbd-2.0.4-backspace-1.patch
-    sed -i 's/\(RESIZECONS_PROGS=\)yes/\1no/g' configure
-    sed -i 's/resizecons.8 //' docs/man/man8/Makefile.in
-
-    PKG_CONFIG_PATH=/tools/lib/pkgconfig ./configure --prefix=/usr --disable-vlock
-    make
-    [[ ${TEST} -eq 1 ]] && make check
-    make install
-
-    mkdir -v /usr/share/doc/kbd-2.0.4
-    cp -R -v docs/doc/* /usr/share/doc/kbd-2.0.4
-
-    cd $BUILDDIR
-    rm -rf ${kbd/.tar*}
-    popd
-    unset kbd
-    touch $BUILDDIR/.chroot-kbd-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/kbd
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/kbd
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

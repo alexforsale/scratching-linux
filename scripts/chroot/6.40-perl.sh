@@ -1,25 +1,39 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-perl-done ]];then
-    pushd $BUILDDIR
-    perl=$(grep perl- /sources/wget-list | grep tar | sed 's/^.*perl-/perl-/');
-    tar -xf /sources/$perl;
-    cd ${perl/.tar*}
+pathappend /tools/bin
 
-    echo "127.0.0.1 localhost $(hostname)" > /etc/hosts
-    export BUILD_ZLIB=False
-    export BUILD_BZIP2=0
-    
-    sh Configure -des -Dprefix=/usr -Dvendorprefix=/usr -Dman1dir=/usr/share/man/man1 \
-       -Dman3dir=/usr/share/man/man3 -Dpager="/usr/bin/less -isR" -Duseshrplib -Dusethreads
-    make
-    [[ ${TEST} -eq 1 ]] && make -k test || true
-    make install
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/perl
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        case $1 in
+            prepare)
+                [[ ! -f /etc/hosts ]] && echo "127.0.0.1 localhost $(hostname)" > /etc/hosts
+                exit 0
+                ;;
+        esac
 
-    cd $BUILDDIR
-    rm -rf ${perl/.tar*}
-    popd
-    unset perl BUILD_ZLIB BUILD_BZIP2
-    touch $BUILDDIR/.chroot-perl-done
-fi
+        pushd /srv/pacman/recipes/Main/perl
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --overwrite /usr/bin/perl \
+               --needed --noconfirm
+        popd
+        ;;
+esac

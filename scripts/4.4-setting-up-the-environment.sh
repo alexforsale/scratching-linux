@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+. $SCRIPTDIR/settings.conf
+
 if [[ "${UID}" != "9000" ]];then
     echo -e "this script must run under lfs user";
     exit 1

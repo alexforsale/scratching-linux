@@ -1,26 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-kmod-done ]];then
-    pushd $BUILDDIR
-    kmod=$(grep kmod- /sources/wget-list | grep tar | sed 's/^.*kmod-/kmod-/');
-    tar -xf /sources/$kmod;
-    cd ${kmod/.tar*}
+pathappend /tools/bin
 
-    ./configure --prefix=/usr --bindir=/bin --sysconfdir=/etc --with-rootlibdir=/lib \
-                --with-kmod --with-zlib
-    make
-    make install
-    
-    for target in depmod insmod lsmod modinfo modprobe rmmod; do
-        ln -sfv ../bin/kmod /sbin/$target
-    done
-
-    ln -sfv kmod /bin/lsmod
-
-    cd $BUILDDIR
-    rm -rf ${kmod/.tar*}
-    popd
-    unset kmod
-    touch $BUILDDIR/.chroot-kmod-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/kmod
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/kmod
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

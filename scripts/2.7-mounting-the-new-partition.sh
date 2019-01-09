@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 . settings.conf
 
@@ -47,3 +48,11 @@ if [[ -n "$SOURCES" ]];then
     fi
 fi
 sudo chmod a+wt $LFS/sources
+
+# location for pacman local repo
+[[ ! -d $LFS/srv/pacman/ ]] && sudo mkdir -pv $LFS/srv/pacman/{repos,recipes}
+
+# mount bind $SCRIPTDIR/recipes
+if [[ -z "$(mount | grep $LFS/srv/pacman/recipes)" ]];then
+    sudo mount -v --bind ${SCRIPTDIR}/recipes $LFS/srv/pacman/recipes
+fi

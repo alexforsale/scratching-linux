@@ -1,23 +1,31 @@
 #!/tools/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-libcap-done ]];then
-    pushd $BUILDDIR
-    libcap=$(grep libcap- /sources/wget-list | grep tar | sed 's/^.*libcap-/libcap-/');
-    tar -xf /sources/$libcap;
-    cd ${libcap/.tar*}
+pathappend /tools/bin
 
-    sed -i '/install.*STALIBNAME/d' libcap/Makefile
-    make
-    make RAISE_SETFCAP=no lib=lib prefix=/usr install
-    chmod -v 755 /usr/lib/libcap.so
-
-    mv -v /usr/lib/libcap.so.* /lib
-    ln -sfv ../../lib/$(readlink /usr/lib/libcap.so) /usr/lib/libcap.so
-    
-    cd $BUILDDIR
-    rm -rf ${libcap/.tar*}
-    popd
-    unset libcap
-    touch $BUILDDIR/.chroot-libcap-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/libcap
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/libcap
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

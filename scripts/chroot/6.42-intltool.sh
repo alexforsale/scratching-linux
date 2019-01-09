@@ -1,22 +1,32 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-intltool-done ]];then
-    pushd $BUILDDIR
-    intltool=$(grep intltool- /sources/wget-list | grep tar | sed 's/^.*intltool-/intltool-/');
-    tar -xf /sources/$intltool;
-    cd ${intltool/.tar*}
+pathappend /tools/bin
 
-    sed -i 's:\\\${:\\\$\\{:' intltool-update.in
-    ./configure --prefix=/usr
-    make
-    [[ ${TEST} -eq 1 ]] && make check
-    make install
-    install -v -Dm644 doc/I18N-HOWTO /usr/share/doc/intltool-0.51.0/I18N-HOWTO
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/intltool
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
 
-    cd $BUILDDIR
-    rm -rf ${intltool/.tar*}
-    popd
-    unset intltool
-    touch $BUILDDIR/.chroot-intltool-done
-fi
+        pushd /srv/pacman/recipes/Main/intltool
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

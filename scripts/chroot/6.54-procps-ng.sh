@@ -1,30 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-procps-done ]];then
-    pushd $BUILDDIR
-    procps=$(grep procps- /sources/wget-list | grep tar | sed 's/^.*procps-/procps-/');
-    tar -xf /sources/$procps;
-    cd ${procps/.tar*}
+pathappend /tools/bin
 
-    ./configure --prefix=/usr --exec-prefix= --libdir=/usr/lib --docdir=/usr/share/doc/procps-ng-3.3.15 \
-                --disable-static --disable-kill
-    make
-
-    if [[ ${TEST} -eq 1 ]];then
-        sed -i -r 's|(pmap_initname)\\\$|\1|' testsuite/pmap.test/pmap.exp
-        sed -i '/set tty/d' testsuite/pkill.test/pkill.exp
-        rm testsuite/pgrep.test/pgrep.exp
-        make check
-    fi
-    
-    make install
-    mv -v /usr/lib/libprocps.so.* /lib
-    ln -sfv ../../lib/$(readlink /usr/lib/libprocps.so) /usr/lib/libprocps.so
-
-    cd $BUILDDIR
-    rm -rf ${procps/.tar*}
-    popd
-    unset procps
-    touch $BUILDDIR/.chroot-procps-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/procps-ng
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/procps-ng
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

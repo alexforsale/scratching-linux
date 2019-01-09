@@ -1,29 +1,31 @@
 #!/tools/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-sed-done ]];then
-    pushd $BUILDDIR
-    sed=$(grep sed- /sources/wget-list | grep tar | sed 's/^.*sed-/sed-/');
-    tar -xf /sources/$sed;
-    cd ${sed/.tar*}
+pathappend /tools/bin
 
-    sed -i 's/usr/tools/'                 build-aux/help2man
-    sed -i 's/testsuite.panic-tests.sh//' Makefile.in
-
-    ./configure --prefix=/usr --bindir=/bin
-
-    make
-    make html
-
-    [[ ${TEST} -eq 1 ]] && make check
-
-    make install
-    install -d -m755 /usr/share/doc/sed-4.5
-    install -m644 doc/sed.html /usr/share/doc/sed-4.5
-
-    cd $BUILDDIR
-    rm -rf ${sed/.tar*}
-    popd
-    unset sed
-    touch $BUILDDIR/.chroot-sed-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/sed
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/sed
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

@@ -12,7 +12,6 @@ if [[ ! -f $BUILDDIR/.libstdc-done ]];then
     ../libstdc++-v3/configure \
         --host=$LFS_TGT \
         --prefix=/tools \
-        --disable-multilib \
         --disable-nls \
         --disable-libstdcxx-threads \
         --disable-libstdcxx-pch \

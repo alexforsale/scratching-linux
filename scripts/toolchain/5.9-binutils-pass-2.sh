@@ -15,13 +15,14 @@ if [[ ! -f $BUILDDIR/.binutils-pass-2-done ]];then
       --prefix=/tools \
       --disable-nls \
       --disable-werror \
-      --with-lib-path=/tools/lib \
+      --with-lib-path=/tools/lib:/tools/lib32 \
+      --enable-multilib \
       --with-sysroot
     make
     make install
 
     make -C ld clean
-    make -C ld LIB_PATH=/usr/lib:/lib
+    make -C ld LIB_PATH=/usr/lib32:/lib32:/usr/lib:/lib
     cp -v ld/ld-new /tools/bin
 
     cd $BUILDDIR

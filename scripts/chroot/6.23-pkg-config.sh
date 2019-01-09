@@ -1,21 +1,31 @@
 #!/tools/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-pkg-config-done ]];then
-    pushd $BUILDDIR
-    pkg_config=$(grep pkg-config- /sources/wget-list | grep tar | sed 's/^.*pkg-config-/pkg-config-/');
-    tar -xf /sources/$pkg_config;
-    cd ${pkg_config/.tar*}
+pathappend /tools/bin
 
-    ./configure --prefix=/usr --with-internal-glib --disable-host-tool \
-                --docdir=/usr/share/doc/pkg-config-0.29.2
-    make
-    [[ ${TEST} -eq 1 ]] && make check
-    make install
-    
-    cd $BUILDDIR
-    rm -rf ${pkg_config/.tar*}
-    popd
-    unset pkg_config
-    touch $BUILDDIR/.chroot-pkg-config-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/pkg-config
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/pkg-config
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

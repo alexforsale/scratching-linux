@@ -1,37 +1,31 @@
 #!/tools/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-shadow-done ]];then
-    pushd $BUILDDIR
-    shadow=$(grep shadow- /sources/wget-list | grep tar | sed 's/^.*shadow-/shadow-/');
-    tar -xf /sources/$shadow;
-    cd ${shadow/.tar*}
+pathappend /tools/bin
 
-    sed -i 's/groups$(EXEEXT) //' src/Makefile.in
-    find man -name Makefile.in -exec sed -i 's/groups\.1 / /'   {} \;
-    find man -name Makefile.in -exec sed -i 's/getspnam\.3 / /' {} \;
-    find man -name Makefile.in -exec sed -i 's/passwd\.5 / /'   {} \;
-
-    sed -i -e 's@#ENCRYPT_METHOD DES@ENCRYPT_METHOD SHA512@' \
-        -e 's@/var/spool/mail@/var/mail@' etc/login.defs
-
-    sed -i 's/1000/999/' etc/useradd
-
-    ./configure --sysconfdir=/etc --with-group-name-max-length=32
-    make
-    make install
-
-    mv -v /usr/bin/passwd /bin
-
-    pwconv
-    grpconv
-
-    echo -e "input password for root user"
-    passwd root
-    
-    cd $BUILDDIR
-    rm -rf ${shadow/.tar*}
-    popd
-    unset shadow
-    touch $BUILDDIR/.chroot-shadow-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/shadow
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+        for p in ${pkgname[@]};do
+            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+            fi
+        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/shadow
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

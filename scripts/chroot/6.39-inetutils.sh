@@ -1,24 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-inetutils-done ]];then
-    pushd $BUILDDIR
-    inetutils=$(grep inetutils- /sources/wget-list | grep tar | sed 's/^.*inetutils-/inetutils-/');
-    tar -xf /sources/$inetutils;
-    cd ${inetutils/.tar*}
+pathappend /tools/bin
 
-    ./configure --prefix=/usr --localstatedir=/var --disable-logger --disable-whois \
-                --disable-rcp --disable-rexec --disable-rlogin --disable-rsh --disable-servers
-    make
-    [[ ${TEST} -eq 1 ]] && make check
-    make install
-
-    mv -v /usr/bin/{hostname,ping,ping6,traceroute} /bin
-    mv -v /usr/bin/ifconfig /sbin
-
-    cd $BUILDDIR
-    rm -rf ${inetutils/.tar*}
-    popd
-    unset inetutils
-    touch $BUILDDIR/.chroot-inetutils-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/inetutils
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/inetutils
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

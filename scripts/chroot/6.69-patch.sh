@@ -1,19 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-patch-done ]];then
-    pushd $BUILDDIR
-    patch=$(grep patch- /sources/wget-list | grep tar | sed 's/^.*patch-/patch-/');
-    tar -xf /sources/$patch;
-    cd ${patch/.tar*}
+pathappend /tools/bin
 
-    ./configure --prefix=/usr
-    make[[ ${TEST} -eq 1 ]] && make check
-    make install
-    
-    cd $BUILDDIR
-    rm -rf ${patch/.tar*}
-    popd
-    unset patch
-    touch $BUILDDIR/.chroot-patch-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/patch
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/patch
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

@@ -8,9 +8,18 @@ if [[ ! -f $BUILDDIR/.gcc-pass-1-done ]];then
     gmp=$(grep gmp /sources/wget-list | sed 's/^.*gmp/gmp/');
     mpc=$(grep mpc /sources/wget-list | sed 's/^.*mpc/mpc/');
 
+    if [[ ! -f /sources/gcc-pure64.patch ]];then
+        pushd /sources
+        wget https://gist.githubusercontent.com/alexforsale/a1339a64882ac7df065404f0af9bb639/raw/9586520039c5b83b96aadfff9aa206bd1bb6972d/gcc-pure64.patch
+        popd
+    fi
+
     tar -xf /sources/$gcc
     cd ${gcc/.tar*}
 
+    patch -Np1 -i /sources/gcc-pure64.patch
+    sed -i "s|\$(if \$(wildcard \$(shell echo \$(SYSTEM_HEADER_DIR))/../../usr/lib32),../lib32)|../lib32|" gcc/config/i386/t-linux64
+    
     for file in gcc/config/{linux,i386/linux{,64}}.h
     do
         cp -uv $file{,.orig}
@@ -50,7 +59,7 @@ if [[ ! -f $BUILDDIR/.gcc-pass-1-done ]];then
     --with-native-system-header-dir=/tools/include \
     --disable-nls \
     --disable-shared \
-    --disable-multilib \
+    --enable-multilib \
     --disable-decimal-float \
     --disable-threads \
     --disable-libatomic \

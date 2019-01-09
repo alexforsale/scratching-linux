@@ -1,21 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-tar-done ]];then
-    pushd $BUILDDIR
-    tar=$(grep tar- /sources/wget-list | grep tar | sed 's/^.*tar-/tar-/');
-    tar -xf /sources/$tar;
-    cd ${tar/.tar*}
-    
-    FORCE_UNSAFE_CONFIGURE=1 ./configure --prefix=/usr --bindir=/bin
-    make
-    [[ ${TEST} -eq 1 ]] && make check
-    make install
-    make -C doc install-html docdir=/usr/share/doc/tar-1.30
+pathappend /tools/bin
 
-    cd $BUILDDIR
-    rm -rf ${tar/.tar*}
-    popd
-    unset tar
-    touch $BUILDDIR/.chroot-tar-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/tar
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/tar
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

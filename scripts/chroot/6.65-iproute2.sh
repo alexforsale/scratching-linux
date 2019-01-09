@@ -1,22 +1,31 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-iproute2-done ]];then
-    pushd $BUILDDIR
-    iproute2=$(grep iproute2- /sources/wget-list | grep tar | sed 's/^.*iproute2-/iproute2-/');
-    tar -xf /sources/$iproute2;
-    cd ${iproute2/.tar*}
+pathappend /tools/bin
 
-    sed -i /ARPD/d Makefile
-    rm -fv man/man8/arpd.8
-
-    sed -i 's/.m_ipt.o//' tc/Makefile
-    make
-    make DOCDIR=/usr/share/doc/iproute2-4.18.0 install
-
-    cd $BUILDDIR
-    rm -rf ${iproute2/.tar*}
-    popd
-    unset iproute2
-    touch $BUILDDIR/.chroot-iproute2-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/iproute2
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+#        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/iproute2
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm
+        popd
+        ;;
+esac

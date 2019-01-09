@@ -1,24 +1,34 @@
 #!/bin/bash
 set -e
 
-if [[ ! -f $BUILDDIR/.chroot-xz-done ]];then
-    pushd $BUILDDIR
-    xz=$(grep xz- /sources/wget-list | grep tar | sed 's/^.*xz-/xz-/');
-    tar -xf /sources/$xz;
-    cd ${xz/.tar*}
+pathappend /tools/bin
 
-    ./configure --prefix=/usr --disable-static --docdir=/usr/share/doc/xz-5.2.4
-    make
-    [[ ${TEST} -eq 1 ]] && make check
-    make install
-
-    mv -v   /usr/bin/{lzma,unlzma,lzcat,xz,unxz,xzcat} /bin
-    mv -v /usr/lib/liblzma.so.* /lib
-    ln -svf ../../lib/$(readlink /usr/lib/liblzma.so) /usr/lib/liblzma.so
-
-    cd $BUILDDIR
-    rm -rf ${xz/.tar*}
-    popd
-    unset xz
-    touch $BUILDDIR/.chroot-xz-done
-fi
+case ${UID} in
+    8000)
+        pushd /srv/pacman/recipes/Main/xz
+        . PKGBUILD
+        if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
+            PKGDEST=/srv/pacman/repos/Main \
+                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+        fi
+#        for p in ${pkgname[@]};do
+#            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
+#                repo-add --new /srv/pacman/repos/Main/Main.db.tar.gz \
+#                         /srv/pacman/repos/Main/${p}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
+#            fi
+#        done
+        popd
+        ;;
+    0)
+        pushd /srv/pacman/recipes/Main/xz
+        . PKGBUILD
+        popd
+        pushd /srv/pacman/repos/Main
+        pacman -U ${pkgname[@]/%/-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz} \
+               --needed --noconfirm \
+               --overwrite /usr/lib/liblzma.so \
+               --overwrite /usr/lib/liblzma.so.5 \
+               --overwrite /usr/lib/liblzma.so.5.2.4
+        popd
+        ;;
+esac
