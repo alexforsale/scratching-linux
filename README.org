@@ -60,6 +60,7 @@ sudo fdisk -l /dev/loop1
 
    - create filesystem for /dev/loop1p3
    #+BEGIN_SRC shell
+sudo partprobe /dev/loop1 -s
 sudo mkfs.ext4 -L "linuxfromscratch" /dev/loop1p3
    #+END_SRC
 
@@ -90,7 +91,6 @@ popd
    - create a temporary mount point for /dev/loop1p3
 
    #+BEGIN_SRC shell
-sudo partprobe /dev/loop1 -s
 sudo mkdir -pv /mnt/virtual
 sudo mount -v /dev/loop1p3 /mnt/virtual
 sudo rsync -aAXv /mnt/lfs/* /mnt/virtual --exclude={/dev/*,/proc/*,/sys/*,/tmp/*,/run/*,/mnt/*,/media/*,/lost+found}
@@ -110,7 +110,7 @@ VBoxManage convertfromraw --format VDI /media/lfs.img ~/VBoxVM/lfs.vdi
      - Inside the livecd command prompt, mount the lfs partition into a mountpoint
    #+BEGIN_SRC shell
 # inside livecd command prompt
-mkdir -pv /mn/linuxfromscratch # NOTE: some livecd must use sudo
+mkdir -pv /mnt/linuxfromscratch # NOTE: some livecd must use sudo
 
 # check the lfs partition with fdisk -l /dev/sda, mine is on /dev/sda3
 # it's should be the same as the /dev/loop1 scheme, but now named as /dev/sda
