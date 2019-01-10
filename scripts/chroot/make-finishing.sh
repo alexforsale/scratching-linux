@@ -12,6 +12,9 @@ new_chroot_lfs_pacman make_package ldns ${_args[@]} --asdeps
 # openssh
 new_chroot_lfs_pacman make_package openssh ${_args[@]}
 
+# git
+new_chroot_lfs_pacman make_package git ${_args[@]}
+
 # deps for glib2
 new_chroot_lfs_pacman make_package autoconf-archive ${_args[@]} --asdeps
 new_chroot_lfs_pacman make_package dbus ${_args[@]} --asdeps
@@ -26,9 +29,6 @@ new_chroot_lfs_pacman make_package sshfs ${_args[@]}
 
 # dhcpcd
 new_chroot_lfs_pacman make_package dhcpcd ${_args[@]}
-
-# git
-new_chroot_lfs_pacman make_package git ${_args[@]}
 
 # lsb release
 new_chroot_lfs_pacman make_package perl-locale-gettext \
