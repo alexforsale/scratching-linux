@@ -30,6 +30,10 @@ new_chroot_lfs_pacman make_package dhcpcd ${_args[@]}
 # git
 new_chroot_lfs_pacman make_package git ${_args[@]}
 
+# lsb release
+new_chroot_lfs_pacman make_package perl-locale-gettext \
+                      help2man lsb_release ${_args[@]}
+
 # end
 # rebuild linux kernel with additional configs from packages
 new_chroot_lfs_pacman make_package linux ${_args[@]} -f
