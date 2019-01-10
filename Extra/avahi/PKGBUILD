@@ -1,0 +1,129 @@
+#-*-mode:sh-*-
+pkgname=avahi
+pkgver=0.7+16+g1cc2b8e
+pkgrel=1
+pkgdesc='Service Discovery for Linux using mDNS/DNS-SD -- compatible with Bonjour'
+url='https://github.com/lathiat/avahi'
+license=(LGPL)
+arch=(x86_64)
+depends=(expat libdaemon glib2 libcap gdbm dbus)
+_makedeps=(qt4 pygtk mono gtk-sharp-2 gtk3 qt5-base xmltoman python-dbus python-gobject doxygen graphviz gtk2)
+makedepends=(git intltool gobject-introspection)
+optdepends=('gtk3: avahi-discover, avahi-discover-standalone, bshell, bssh, bvnc'
+            'gtk2: gtk2 bindings'
+            'qt4: qt4 bindings'
+            'qt5-base: qt5 bindings'
+            'pygtk: avahi-bookmarks'
+            'python2-twisted: avahi-bookmarks'
+            'mono: mono bindings'
+            'nss-mdns: NSS support for mDNS'
+            'python-gobject: avahi-discover'
+            'python-dbus: avahi-discover')
+backup=(etc/avahi/{hosts,avahi-daemon.conf,avahi-{autoip,dnsconf}d.action}
+        usr/lib/avahi/service-types.db)
+_commit=1cc2b8e8d62e939b8bd683f795794878863931af  # master
+source=("git+https://github.com/lathiat/avahi#commit=$_commit")
+sha512sums=('SKIP')
+
+for _d in "${_deps[@]}";do
+  if [[ -n "$(pacman -Qq "${_d}" 2>/dev/null)" ]];then
+    depends+=( "${_d}")
+  else
+    optdepends+=( "${_d}")
+  fi
+done
+for _m in "${_makedeps[@]}";do
+  if [[ -n "$(pacman -Qq "${_m}" 2>/dev/null)" ]];then
+    depends+=( "${_m}")
+  else
+    optdepends+=( "${_m}")
+  fi
+done
+
+pkgver() {
+  cd $pkgname
+  git describe --tags | sed 's/^v//;s/-/+/g'
+}
+
+
+_confargs=()
+if [[ -z "$(pacman -Qq qt4 2>/dev/null)" ]];then
+  _confargs+=( '--disable-qt4')
+fi
+if [[ -z "$(pacman -Qq qt5-base 2>/dev/null)" ]];then
+  _confargs+=( '--disable-qt5')
+fi
+if [[ -z "$(pacman -Qq gtk3 2>/dev/null)" ]];then
+  _confargs+=( '--disable-gtk3')
+fi
+if [[ -z "$(pacman -Qq gtk2 2>/dev/null)" ]];then
+  _confargs+=( '--disable-gtk')
+fi
+if [[ -z "$(pacman -Qq python-gobject 2>/dev/null)" ]];then
+  _confargs+=( '--disable-pygobject')
+fi
+if [[ -z "$(pacman -Qq python-dbus 2>/dev/null)" ]];then
+  _confargs+=( '--disable-python-dbus')
+fi
+if [[ -z "$(pacman -Qq mono 2>/dev/null)" ]];then
+  _confargs+=( '--disable-mono')
+fi
+if [[ -z "$(pacman -Qq doxygen 2>/dev/null)" ]];then
+  _confargs+=( '--disable-doxygen-doc --disable-doxygen-dot --disable-doxygen-xml --disable-doxygen-html')
+fi
+if [[ -z "$(pacman -Qq xmltoman 2>/dev/null)" ]];then
+  _confargs+=( '--disable-xmltoman --disable-manpages')
+fi
+
+prepare() {
+  cd $pkgname
+  NOCONFIGURE=1 ./autogen.sh
+  if [[ -n "$(pacman -Qq qt4 2>/dev/null)" ]];then
+    export MOC_QT4=/usr/bin/moc-qt4
+  fi
+  export PYTHON=/usr/bin/python3
+  ./configure \
+    --prefix=/usr \
+    --sysconfdir=/etc \
+    --localstatedir=/var \
+    --sbindir=/usr/bin \
+    --disable-monodoc \
+    --enable-compat-libdns_sd \
+    --with-distro=none \
+    --with-avahi-priv-access-group=network \
+    --with-autoipd-user=avahi \
+    --with-autoipd-group=avahi \
+    --with-systemdsystemunitdir=/lib/systemd/system ${_confargs[@]}
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  cp -a avahi-python/avahi avahi-python/avahi2
+}
+
+build() {
+  cd $pkgname
+
+  make
+  make -C avahi-python/avahi2 PYTHON=/usr/bin/python2
+}
+
+package() {
+  cd $pkgname
+  make DESTDIR="$pkgdir" install
+  make DESTDIR="$pkgdir" -C avahi-python/avahi2 install \
+       PYTHON=/usr/bin/python2 pythondir=/usr/lib/python2.7/site-packages
+
+  rmdir "$pkgdir/run"
+
+  # this isn't ported
+  sed -i '1s|python3|python2|' "$pkgdir/usr/bin/avahi-bookmarks" || true
+
+  # mdnsresponder compat
+  ln -s avahi-compat-libdns_sd/dns_sd.h "$pkgdir/usr/include/dns_sd.h"
+
+  # move example services https://bugs.archlinux.org/task/47822
+  install -d "$pkgdir/usr/share/doc/$pkgname"
+  mv "$pkgdir"/etc/avahi/services/{,sftp-}ssh.service \
+     "$pkgdir/usr/share/doc/$pkgname/"
+
+  echo 'u avahi - "Avahi mDNS/DNS-SD daemon"' |
+    install -Dm644 /dev/stdin "$pkgdir/usr/lib/sysusers.d/$pkgname.conf"
+}
