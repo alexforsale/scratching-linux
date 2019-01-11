@@ -1,0 +1,50 @@
+#-*-mode:sh-*-
+pkgname=libcroco
+pkgver=0.6.12+4+g9ad7287
+pkgrel=1
+pkgdesc="A CSS parsing library"
+url="https://gitlab.gnome.org/GNOME/libcroco"
+arch=(x86_64)
+depends=(glib2 libxml2)
+_makedeps=(gtk-doc)
+makedepends=(intltool git)
+license=(LGPL)
+_commit=9ad72875e9f08e4c519ef63d44cdbd94aa9504f7  # master
+source=("git+https://gitlab.gnome.org/GNOME/libcroco.git#commit=$_commit")
+sha256sums=('SKIP')
+
+_confargs=('--prefix=/usr' "--disable-static")
+for _m in "${_makedeps[@]}";do
+  if [[ -n "$(pacman -Ss "${_m}" 2>/dev/null)" ]];then
+    depends+=( "${_m}")
+    _confargs+=( '--enable-gtk-doc')
+  else
+    optdepends+=( "${_m}")
+  fi
+done
+
+pkgver() {
+  cd $pkgname
+  git describe --tags | sed 's/-/+/g'
+}
+
+prepare() {
+  cd $pkgname
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure ${_confargs[@]}
+}
+
+check() {
+  cd $pkgname
+  make check
+}
+
+build() {
+  cd $pkgname
+  make
+}
+
+package() {
+  cd $pkgname
+  make DESTDIR="$pkgdir" install
+}
