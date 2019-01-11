@@ -1,0 +1,39 @@
+#-*-mode:sh-*-
+pkgname=expect
+pkgver=5.45.4
+pkgrel=1
+pkgdesc='A tool for automating interactive applications'
+arch=(x86_64)
+url='http://www.nist.gov/el/msid/expect.cfm'
+license=(custom)
+depends=(tcl)
+source=(https://downloads.sourceforge.net/project/expect/Expect/$pkgver/expect${pkgver}.tar.gz)
+sha256sums=('49a7da83b0bdd9f46d04a04deec19c7767bb9a323e40c4781f89caf760b92c34')
+
+prepare(){
+  cd expect${pkgver}
+  ./configure \
+    --prefix=/usr \
+    --with-tcl=/usr/lib \
+    --enable-shared \
+    --mandir=/usr/share/man \
+    --with-tclinclude=/usr/include
+}
+
+build() {
+  cd expect${pkgver}
+  make
+}
+
+check() {
+  cd expect${pkgver}
+  make test
+}
+
+package() {
+  cd expect${pkgver}
+  make DESTDIR="$pkgdir" install
+
+  ln -sv expect${pkgver}/libexpect${pkgver}.so "$pkgdir"/usr/lib
+  install -Dm644 README "$pkgdir/usr/share/licenses/$pkgname/README"
+}
