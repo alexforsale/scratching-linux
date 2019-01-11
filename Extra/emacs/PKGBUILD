@@ -81,6 +81,7 @@ prepare() {
     # set-frame-font and set-menu-font. Good luck!
     --without-gconf
     --without-gsettings
+    --without-libsystemd
   )
 
   if [[ -z "$(pacman -Qq clang 2>&1 >/dev/null)" ]] &&
@@ -136,9 +137,6 @@ prepare() {
   fi
   if [[ ! "$(pacman -Qqs lcms2 2>&1 >/dev/null)" ]];then
     _conf+=( '--without-lcms2');
-  fi
-  if [[ ! "$(pacman -Qqs libsystemd 2>&1 >/dev/null)" ]];then
-    _conf+=( '--without-libsystemd');
   fi
   if [[ ! "$(pacman -Qqs libxml2 2>&1 >/dev/null)" ]];then
     _conf+=( '--without-xml2');
