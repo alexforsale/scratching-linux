@@ -1,0 +1,43 @@
+#-*-mode:sh-*-
+pkgname=libtirpc
+pkgver=1.1.4
+pkgrel=1
+pkgdesc="Transport Independent RPC library (SunRPC replacement)"
+arch=('x86_64')
+url="http://libtirpc.sourceforge.net/"
+license=('BSD')
+_deps=('krb5')
+depends=()
+backup=('etc/netconfig')
+source=(http://downloads.sourceforge.net/sourceforge/libtirpc/${pkgname}-${pkgver}.tar.bz2)
+groups=('lfs-base')
+
+for _d in "${_deps[@]}";do
+  if [[ -n "$(pacman -Ss "^${_d}$" 2>/dev/null)" ]];then
+    depends+=( "${_d}")
+  else
+    optdepends+=( "${_d}")
+  fi
+done
+
+_confargs=('--prefix=/usr' '--sysconf=/etc')
+if [[ -z "$(pacman -Ss ^krb5$ 2>/dev/null)" ]];then
+  _confargs+=( '--disable-gssapi')
+fi
+
+prepare(){
+  cd ${pkgname}-${pkgver}
+  ./configure ${_confargs[@]}
+}
+
+build() {
+  cd ${pkgname}-${pkgver}
+  make
+}
+
+package() {
+  cd ${pkgname}-${pkgver}
+  make DESTDIR="${pkgdir}" install
+  install -D -m644 COPYING "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE
+}
+md5sums=('f5d2a623e9dfbd818d2f3f3a4a878e3a')
