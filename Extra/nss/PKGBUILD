@@ -1,0 +1,44 @@
+#-*-mode:sh-*-
+pkgname=nss
+pkgver=3.38
+pkgrel=1
+pkgdesc="Network Security Services"
+url="https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS"
+arch=(x86_64)
+license=(MPL GPL)
+_nsprver=4.20
+depends=("nspr>=${_nsprver}" sqlite zlib sh p11-kit)
+makedepends=(perl python python2 gyp)
+source=("https://ftp.mozilla.org/pub/security/nss/releases/NSS_${pkgver//./_}_RTM/src/nss-${pkgver}.tar.gz"
+        "http://www.linuxfromscratch.org/patches/blfs/8.3/nss-${pkgver}-standalone-1.patch")
+
+prepare(){
+  cd nss-$pkgver
+  patch -Np1 -i ../nss-${pkgver}-standalone-1.patch
+}
+build(){
+  cd nss-$pkgver
+  cd nss
+  make -j1 BUILD_OPT=1 \
+       NSPR_INCLUDE_DIR=/usr/include/nspr \
+       USE_SYSTEM_ZLIB=1 \
+       ZLIB_LIBS=-lz \
+       NSS_ENABLE_WERROR=0 \
+       $([ $(uname -m) = x86_64 ] && echo USE_64=1) \
+       $([ -f /usr/include/sqlite3.h ] && echo NSS_USE_SYSTEM_SQLITE=1)
+}
+
+package(){
+  cd nss-$pkgver
+  cd dist
+  install -v -m755 -d ${pkgdir}/usr/{lib,lib/pkgconfig,bin,include}
+  install -v -m755 Linux*/lib/*.so $pkgdir/usr/lib
+  install -v -m644 Linux*/lib/{*.chk,libcrmf.a} $pkgdir/usr/lib
+  install -v -m755 -d $pkgdir/usr/include/nss
+  cp -v -RL {public,private}/nss/* $pkgdir/usr/include/nss
+  chmod -v 644 $pkgdir/usr/include/nss/*
+  install -v -m755 Linux*/bin/{certutil,nss-config,pk12util} $pkgdir/usr/bin
+  install -v -m644 Linux*/lib/pkgconfig/nss.pc $pkgdir/usr/lib/pkgconfig/nss.pc
+}
+sha256sums=('2c643d3c08d6935f4d325f40743719b6990aa25a79ec2f8f712c99d086672f62'
+            '0c2608a8bd3d77f7196f0e4751f36eba7b77005c9111c349f883b4f06cdb939a')
