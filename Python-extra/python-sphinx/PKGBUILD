@@ -9,6 +9,7 @@ url='http://www.sphinx-doc.org/'
 license=('BSD')
 
 _deps=('python2-requests' 'python-requests')
+depends=()
 makedepends=(
   'python-setuptools'
   'python-docutils'
@@ -60,6 +61,14 @@ sha512sums=('971a478ccd0f77e7e9bf8548a31805140d2d757f237493e63a3046309683b1f6ae4
             'SKIP'
             '3f690a4b96ea32694600a83482fee4753c6ee128c0599d4ef2d227b02263f762110cad414a2ea992439d434bcaba7acd259843c17922514295852f2abe67e0d1')
 
+for _d in "${_deps[@]}";do
+  if [[ -n "$(pacman -Ss "^${_d}$" 2>/dev/null)" ]];then
+    depends+=( "${_d}")
+  else
+    optdepends+=( "${_d}")
+  fi
+done
+
 prepare() {
   # backport sagemath-doc build fix
   pushd Sphinx-$pkgver
@@ -101,7 +110,7 @@ build() {
 
 package_python-sphinx() {
   pkgdesc='Python3 documentation generator'
-  depends=(
+  depends+=(
     'python-setuptools'
     'python-jinja'
     'python-pygments'
@@ -127,7 +136,7 @@ package_python-sphinx() {
 
 package_python2-sphinx() {
   pkgdesc='Python2 documentation generator'
-  depends=(
+  depends+=(
     'python2-setuptools'
     'python2-jinja'
     'python2-pygments'
