@@ -12,12 +12,6 @@ _adduser() {
 	fi
 }
 
-pre_upgrade() {
-	if [[ ! -L etc/os-release ]]; then
-		rm etc/os-release
-	fi
-}
-
 post_upgrade() {
 	_addgroup avahi -fg 84
 	_addgroup netdev -fg 86

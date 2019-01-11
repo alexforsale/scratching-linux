@@ -129,7 +129,6 @@ package() {
   ln -sf  ../init.d/avahi ${pkgdir}/etc/rc.d/rc4.d/S34avahi
   ln -sf  ../init.d/avahi ${pkgdir}/etc/rc.d/rc5.d/S34avahi
   ln -sf  ../init.d/avahi ${pkgdir}/etc/rc.d/rc6.d/K28avahi
-
 }
 
 sha512sums=('SKIP'
