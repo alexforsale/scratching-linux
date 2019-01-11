@@ -1,0 +1,73 @@
+#-*-mode:sh-*-
+pkgbase=gobject-introspection
+pkgname=(gobject-introspection gobject-introspection-runtime)
+pkgver=1.58.2
+pkgrel=1
+pkgdesc="Introspection system for GObject-based libraries"
+url="https://wiki.gnome.org/Projects/GObjectIntrospection"
+arch=(x86_64)
+license=(LGPL GPL)
+depends=(python python-mako)
+_makedeps=('cairo' 'gtk-doc')
+makedepends=(git python-sphinx meson bison libffi)
+options=(!emptydirs)
+_commit=8796f5f17df75c6f9e726bf1549bb6d1508793f0  # tags/1.58.2^0
+source=("git+https://gitlab.gnome.org/GNOME/gobject-introspection.git#commit=$_commit")
+sha512sums=('SKIP')
+
+# FFI_PC_CFLAGS
+# FFI_PC_LIBS
+# FFI_PC_PACKAGES
+
+_confargs=()
+for _m in "${_makedeps[@]}";do
+  if [[ -n "$(pacman -Ss "^${_m}$" 2>/dev/null)" ]];then
+    depends+=( "${_m}")
+  else
+    optdepends+=( "${_m}")
+  fi
+done
+
+if [[ -n "$(pacman -Qq cairo 2>/dev/null)" ]];then
+  _confargs+=( '-D cairo=true')
+fi
+if [[ -n "$(pacman -Qq cairo 2>/dev/null)" ]];then
+  _confargs+=( '-D gtk-doc=true')
+fi
+
+pkgver() {
+  cd $pkgbase
+  git describe --tags | sed 's/-/+/g'
+}
+
+prepare() {
+  meson-helper $pkgbase build ${_confargs[@]}
+}
+
+build() {
+  ninja -C build
+}
+
+check() {
+  meson test -C build
+}
+
+package_gobject-introspection() {
+  depends+=("gobject-introspection-runtime=$pkgver-$pkgrel")
+
+  DESTDIR="$pkgdir" meson install -C build
+
+  python -m compileall -d /usr/lib/gobject-introspection "$pkgdir/usr/lib/gobject-introspection"
+  python -O -m compileall -d /usr/lib/gobject-introspection "$pkgdir/usr/lib/gobject-introspection"
+
+  ### Split runtime
+  mkdir -p "$srcdir/runtime/lib"
+  mv "$pkgdir"/usr/lib/{lib*,girepository-*} "$srcdir/runtime/lib"
+}
+
+package_gobject-introspection-runtime() {
+  pkgdesc+=" (runtime library)"
+  depends=(glib2)
+
+  mv "$srcdir/runtime" "$pkgdir/usr"
+}
