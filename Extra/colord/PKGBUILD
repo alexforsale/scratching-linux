@@ -7,10 +7,10 @@ pkgdesc="System daemon for managing color devices"
 url="https://www.freedesktop.org/software/colord"
 arch=(x86_64)
 license=(GPL2)
-depends=(lcms2 libgusb polkit sqlite dconf dbus libgudev shared-mime-info libsystemd udev)
+depends=(lcms2 libgusb polkit sqlite dconf dbus libgudev shared-mime-info udev)
 _makedeps=(gtk-doc)
 makedepends=(gobject-introspection vala sane bash-completion argyllcms git docbook-utils
-             docbook-sgml perl-sgmls meson systemd)
+             docbook-sgml perl-sgmls meson)
 options=(!emptydirs)
 _commit=cd7faac0d81f2dabef6c9787baf78b9e8fb0e1ae  # tags/1.4.3^0
 source=("git+https://github.com/hughsie/colord#commit=$_commit")
