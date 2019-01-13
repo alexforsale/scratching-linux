@@ -52,6 +52,9 @@ fi
 if [[ -n "$(pacman -Ss ^gcc-fortran$ 2>/dev/null)" ]];then
   makedepends+=( 'gcc-fortran')
 fi
+if [[ -n "$(pacman -Ss ^libxkbcommon-x11$ 2>/dev/null)" ]];then
+  makedepends+=( 'libxkbcommon-x11')
+fi
 
 prepare(){
   cd ${pkgname}-${pkgver}
