@@ -84,7 +84,7 @@ prepare() {
               --enable-libpaper \
               --with-php=/usr/bin/php-cgi \
               --disable-systemd \
-              --with-docdir=/usr/share/cups/doc-${pkgver}
+              --with-docdir=/usr/share/cups/doc-${pkgver} \
               --with-optim="$CFLAGS" #--help
 }
 
