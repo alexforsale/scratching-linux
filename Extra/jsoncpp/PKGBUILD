@@ -27,11 +27,11 @@ build() {
     --with-dot
 
   msg2 "Building shared library..."
-  arch-meson --default-library shared build
+  meson-helper --default-library shared build
   ninja -C build
 
   msg2 "Building static library..."
-  arch-meson --default-library static build-static
+  meson-helper --default-library static build-static
   ninja -C build-static
 }
 
