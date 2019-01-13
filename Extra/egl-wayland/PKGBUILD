@@ -25,7 +25,7 @@ prepare() {
 }
 
 build() {
-  arch-meson $pkgname build
+  meson-helper $pkgname build
   ninja -C build
 }
 
