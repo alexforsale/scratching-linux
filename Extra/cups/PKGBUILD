@@ -172,7 +172,7 @@ package_cups() {
   sed -i -e 's:PageLogFormat:#PageLogFormat:' $pkgdir/etc/cups/cupsd.conf*
 
   install -vdm755 ${pkgdir}/etc/rc.d/{init.d,rc{0..6}.d}
-  install -m 754 ${srcdir}/init.d/cups ${pkgdir}/etc/rc.d/init.d/
+  install -m 754 ${srcdir}/cups.init ${pkgdir}/etc/rc.d/init.d/
   ln -sf  ../init.d/cups ${pkgdir}/etc/rc.d/rc0.d/K00cups
   ln -sf  ../init.d/cups ${pkgdir}/etc/rc.d/rc1.d/K00cups
   ln -sf  ../init.d/cups ${pkgdir}/etc/rc.d/rc2.d/S25cups
