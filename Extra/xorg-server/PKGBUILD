@@ -14,7 +14,7 @@ makedepends=('xorgproto' 'pixman' 'libx11' 'mesa' 'mesa-libgl' 'xtrans'
              'libxmu' 'libxrender' 'libxi' 'libxaw' 'libdmx' 'libxtst' 'libxres'
              'xorg-xkbcomp' 'xorg-util-macros' 'xorg-font-util' 'libepoxy'
              'xcb-util' 'xcb-util-image' 'xcb-util-renderutil' 'xcb-util-wm' 'xcb-util-keysyms'
-             'libxshmfence' 'libunwind' 'wayland-protocols' 'egl-wayland' 'meson') # 'git')
+             'libxshmfence' 'libunwind' 'wayland-protocols' 'egl-wayland' 'meson' 'git')
 source=(xorg/xserver::git://anongit.freedesktop.org/git/xorg/xserver
         'xwayland-config.h.meson.in::https://cgit.freedesktop.org/xorg/xserver/plain/include/xwayland-config.h.meson.in?id=xorg-server-1.20.0'
         xserver-autobind-hotplug.patch
