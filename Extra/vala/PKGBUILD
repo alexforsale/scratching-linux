@@ -1,6 +1,6 @@
 #-*-mode:sh-*-
 pkgname=vala
-pkgver=0.43.2+17+g2cea36afe
+pkgver=0.43.4+19+gf48208b4c
 _pkgver=0.43.2
 pkgrel=1
 pkgdesc='Compiler for the GObject type system'
