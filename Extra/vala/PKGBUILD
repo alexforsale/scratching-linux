@@ -9,7 +9,8 @@ arch=(x86_64)
 license=(LGPL)
 _deps=(gtk-doc)
 depends=(glib2 graphviz ttf-font pkg-config gcc)
-makedepends=(vala libxslt git help2man)
+_makedeps=('vala')
+makedepends=(libxslt git help2man)
 checkdepends=(dbus libx11 gobject-introspection)
 provides=(valadoc libvala-${pkgver%.*}.so libvaladoc-${pkgver%.*}.so)
 conflicts=(valadoc)
@@ -24,8 +25,15 @@ for _d in "${_deps[@]}";do
         optdepends+=( "${_d}")
     fi
 done
+for _m in "${_makedeps[@]}";do
+    if [[ -n "$(pacman -Ss "^${_m}$" 2>/dev/null)" ]];then
+        makedepends+=( "${_m}")
+    else
+        optdepends+=( "${_m}")
+    fi
+done
 
-if [[ -z "$(pacman -Qq "^vala$" 2>/dev/null)" ]];then
+if [[ -z "$(pacman -Ss "^vala$" 2>/dev/null)" ]];then
     source+=("https://download.gnome.org/sources/$pkgname/${_pkgver%.*}/$pkgname-$_pkgver.tar.xz")
     sha256sums+=('713cb9464649c851b0050b6f9b6b91fd6157f23e7ab5943ceb1883538f86d722')
 fi
