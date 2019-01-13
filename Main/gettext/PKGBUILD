@@ -1,0 +1,79 @@
+#-*- mode: sh -*-
+pkgname=gettext
+pkgver=0.19.8.1
+pkgrel=1
+pkgdesc="GNU internationalization library"
+url="https://www.gnu.org/software/gettext/"
+arch=(x86_64)
+license=(GPL)
+depends=('gcc-libs' 'acl' 'sh')
+makedepends=()
+optdepends=('git: for autopoint infrastructure updates')
+options=(!docs)
+source=(https://ftp.gnu.org/pub/gnu/gettext/$pkgname-$pkgver.tar.xz)
+validpgpkeys=('462225C3B46F34879FC8496CD605848ED7E69871')  # Daiki Ueno
+groups=('lfs-base')
+
+if [[ -n "$(pacman -Ss ^glib2$ 2>/dev/null)" ]];then
+  depends+=( 'glib2')
+else
+  optdepends+=( 'glib2')
+fi
+if [[ -n "$(pacman -Ss ^libunistring$ 2>/dev/null)" ]];then
+  depends+=( 'libunistring')
+else
+  optdepends+=( 'libunistring')
+fi
+if [[ -n "$(pacman -Ss ^libcroco$ 2>/dev/null)" ]];then
+  depends+=( 'libcroco')
+else
+  optdepends+=( 'libcroco')
+fi
+if [[ -n "$(pacman -Ss ^gettext$ 2>/dev/null)" ]];then
+  makedepends+=( 'gettext')
+else
+  optdepends+=( 'gettext')
+fi
+if [[ -n "$(pacman -Ss ^emacs$ 2>/dev/null)" ]];then
+  makedepends+=( 'emacs')
+else
+  optdepends+=( 'emacs')
+fi
+if [[ -n "$(pacman -Ss ^git$ 2>/dev/null)" ]];then
+  makedepends+=( 'git')
+else
+  optdepends+=( 'git')
+fi
+
+prepare() {
+  cd $pkgname-$pkgver
+  # suppress two invocations of test-lock which on some machines can loop forever
+  sed -i '/^TESTS =/d' gettext-runtime/tests/Makefile.in
+  sed -i 's/test-lock..EXEEXT.//' gettext-tools/gnulib-tests/Makefile.in
+
+  # fix a configuration file
+  sed -e '/AppData/{N;N;p;s/\.appdata\./.metainfo./}' \
+      -i gettext-tools/its/appdata.loc
+
+  ./configure \
+    --prefix=/usr \
+    --disable-static \
+    --docdir=/usr/share/doc/${pkgname}-${pkgver}
+}
+
+build() {
+  cd $pkgname-$pkgver
+  make
+}
+
+check() {
+  cd $pkgname-$pkgver
+  make check
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
+  chmod -v 0755 "$pkgdir"/usr/lib/preloadable_libintl.so
+}
+md5sums=('df3f5690eaa30fd228537b00cb7b7590')

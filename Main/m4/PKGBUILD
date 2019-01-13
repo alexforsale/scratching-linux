@@ -1,0 +1,42 @@
+# -*- mode: sh -*-
+pkgname=m4
+pkgver=1.4.18
+pkgrel=1
+pkgdesc="The GNU macro processor"
+arch=('x86_64')
+url="http://www.gnu.org/software/m4"
+license=('GPL3')
+depends=('glibc')
+source=(ftp://ftp.gnu.org/gnu/m4/$pkgname-$pkgver.tar.xz)
+groups=('lfs-base')
+
+if [[ -n "$(pacman -Ss ^bash$ 2>/dev/null)" ]];then
+    depends+=( 'bash')
+else
+    optdepends+=( 'bash')
+fi
+
+prepare(){
+    cd ${pkgname}-${pkgver}
+    sed -i 's/IO_ftrylockfile/IO_EOF_SEEN/' lib/*.c
+    echo "#define _IO_IN_BACKUP 0x100" >> lib/stdio-impl.h
+
+    ./configure --prefix=/usr
+}
+
+build(){
+    cd ${pkgname}-${pkgver}
+    make
+}
+
+check() {
+    cd ${pkgname}-${pkgver}
+    make check
+}
+
+package() {
+    cd ${pkgname}-${pkgver}
+    make prefix=${pkgdir}/usr install
+}
+
+md5sums=('730bb15d96fffe47e148d1e09235af82')

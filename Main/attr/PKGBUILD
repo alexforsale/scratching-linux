@@ -1,0 +1,55 @@
+# -*- mode: sh -*-
+pkgname=attr
+pkgver=2.4.48
+pkgrel=1
+pkgdesc="Extended attribute support library for ACL support"
+arch=('x86_64')
+url="http://savannah.nongnu.org/projects/attr"
+license=('LGPL')
+depends=('glibc')
+makedepends=()
+replaces=('xfsattr')
+provides=('xfsattr')
+conflicts=('xfsattr')
+source=(https://download.savannah.gnu.org/releases/$pkgname/$pkgname-$pkgver.tar.gz)
+groups=('lfs-base')
+
+if [[ -n "$(pacman -Ss ^gettext$ 2>/dev/null)" ]];then
+  makedepends+=( 'gettext')
+fi
+
+prepare(){
+  cd $pkgname-$pkgver
+
+  ./configure \
+      --prefix=/usr \
+      --bindir=/bin \
+      --sysconfdir=/etc \
+      --disable-static \
+      --docdir=/usr/share/doc/${pkgname}-${pkgver}
+}
+
+build() {
+  cd $pkgname-$pkgver
+  make
+}
+
+check(){
+  cd $pkgname-$pkgver
+  make check
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="${pkgdir}" install
+
+  # tidy up
+  chmod 0755 "$pkgdir"/usr/lib/libattr.so.*.*.*
+  rm -rf "$pkgdir"/usr/share/man/man2
+
+  install -v -dm755 "$pkgdir"/lib
+  mv -v "$pkgdir"/usr/lib/libattr.so.* "$pkgdir"/lib
+  ln -sfv ../../lib/$(readlink "$pkgdir"/usr/lib/libattr.so) "$pkgdir"/usr/lib/libattr.so
+}
+
+md5sums=('bc1e5cb5c96d99b24886f1f527d3bb3d')

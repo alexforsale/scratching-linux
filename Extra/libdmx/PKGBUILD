@@ -1,0 +1,37 @@
+#-*-mode:sh-*-
+pkgname=libdmx
+pkgver=1.1.4.r2.gd19f96e
+pkgrel=1
+pkgdesc="X11 Distributed Multihead extension library"
+arch=('x86_64')
+url="https://xorg.freedesktop.org/"
+license=('custom')
+depends=('dmxproto' 'libxext')
+makedepends=('xorg-util-macros')
+source=(xorg/lib/libdmx::git://anongit.freedesktop.org/git/xorg/lib/libdmx)
+sha512sums=('SKIP')
+groups=('xorg')
+
+pkgver() {
+  cd "$pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/$pkgname.//g"
+}
+
+prepare(){
+  cd "$pkgname"
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr --disable-static
+}
+
+build() {
+  cd "$pkgname"
+  make
+}
+
+package() {
+  cd "$pkgname"
+  make DESTDIR="${pkgdir}" install
+
+  install -m755 -d "${pkgdir}/usr/share/licenses/${pkgname}"
+  install -m644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/"
+}

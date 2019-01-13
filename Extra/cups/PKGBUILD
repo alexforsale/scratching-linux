@@ -1,0 +1,197 @@
+#-*-mode:sh-*-
+pkgbase="cups"
+pkgname=('libcups' 'cups')
+pkgver=2.2.10
+pkgrel=1
+arch=('x86_64')
+license=('GPL')
+url="https://www.cups.org/"
+_deps=('cups-filters')
+_makedeps=('avahi' 'cups-filters' 'colord')
+makedepends=('libtiff' 'libpng' 'acl' 'linux-pam' 'xdg-utils' 'krb5' 'gnutls'
+             'bc' 'xinetd' 'gzip' 'autoconf' 'libusb' 'dbus'
+             'hicolor-icon-theme' 'inetutils' 'libpaper' 'valgrind')
+source=(https://github.com/apple/cups/releases/download/v${pkgver}/cups-${pkgver}-source.tar.gz{,.sig}
+        cups.logrotate
+        cups.pam
+        cups.init
+        # improve build and linking
+        cups-no-export-ssllibs.patch
+        cups-no-gzip-man.patch
+        cups-1.6.2-statedir.patch
+        # bugfixes
+        guid.patch
+        cups.kernel.conf)
+validpgpkeys=('3737FD0D0E63B30172440D2DDBA3A7AB08D76223') # CUPS.org (CUPS.org PGP key) <security@cups.org>
+validpgpkeys+=('45D083946E3035282B3CCA9AF434104235DA97EB') # "CUPS.org <security@cups.org>"
+validpgpkeys+=('845464660B686AAB36540B6F999559A027815955') # "Michael R Sweet <michael.r.sweet@gmail.com>"
+
+for _d in "${_deps[@]}";do
+  if [[ -n "$(pacman -Ss "^${_d}$" 2>/dev/null)" ]];then
+    depends+=( "${_d}")
+  else
+    optdepends+=( "${_d}")
+  fi
+done
+for _m in "${_makedeps[@]}";do
+  if [[ -n "$(pacman -Ss "^${_m}$" 2>/dev/null)" ]];then
+    depends+=( "${_m}")
+  else
+    optdepends+=( "${_m}")
+  fi
+done
+
+prepare() {
+
+  cd ${pkgbase}-${pkgver}
+
+  # improve build and linking
+  # Do not export SSL libs in cups-config
+  patch -Np1 -i ${srcdir}/cups-no-export-ssllibs.patch
+  # don't zip man pages in make install, let makepkg do that / Fedora
+  patch -Np1 -i ${srcdir}/cups-no-gzip-man.patch
+  # move /var/run -> /run for pid file
+  patch -Np1 -i ${srcdir}/cups-1.6.2-statedir.patch
+
+  # FS#56818 - https://github.com/apple/cups/issues/5236
+  patch -Np1 -i ${srcdir}/guid.patch
+
+  # set MaxLogSize to 0 to prevent using cups internal log rotation
+  sed -i -e '5i\ ' conf/cupsd.conf.in
+  sed -i -e '6i# Disable cups internal logging - use logrotate instead' conf/cupsd.conf.in
+  sed -i -e '7iMaxLogSize 0' conf/cupsd.conf.in
+
+  # Rebuild configure script for not zipping man-pages.
+  aclocal -I config-scripts
+  autoconf -I config-scripts
+
+  ./configure --prefix=/usr \
+              --sysconfdir=/etc \
+              --localstatedir=/var \
+              --libdir=/usr/lib \
+              --with-rcdir=/tmp/cupsinit \
+              --with-logdir=/var/log/cups \
+              --with-exe-file-perm=0755 \
+              --with-cups-user=9 \
+              --with-cups-group=19 \
+              --with-system-groups=lpadmin \
+              --enable-pam=yes \
+              --enable-raw-printing \
+              --enable-dbus --with-dbusdir=/etc/dbus-1 \
+              --enable-ssl=yes \
+              --enable-threads \
+              --enable-avahi\
+              --enable-libpaper \
+              --with-php=/usr/bin/php-cgi \
+              --disable-systemd \
+              --with-docdir=/usr/share/cups/doc-${pkgver}
+              --with-optim="$CFLAGS" #--help
+}
+
+build() {
+  cd ${pkgbase}-${pkgver}
+
+  make
+}
+
+check() {
+  cd ${pkgbase}-${pkgver}
+  #make -k check || /bin/true
+}
+
+package_libcups() {
+  pkgdesc="The CUPS Printing System - client libraries and headers"
+  depends=('gnutls' 'libtiff>=4.0.0' 'libpng>=1.5.7' 'krb5' 'avahi' 'libusb')
+
+  cd ${pkgbase}-${pkgver}
+  make BUILDROOT=${pkgdir} install-headers install-libs
+  # put this into the libs pkg to make other software find the libs(no pkg-config file included)
+  mkdir -p ${pkgdir}/usr/sbin
+  install -m755 ${srcdir}/${pkgbase}-${pkgver}/cups-config ${pkgdir}/usr/sbin/cups-config
+}
+
+package_cups() {
+  pkgdesc="The CUPS Printing System - daemon package"
+  install=cups.install
+  backup=(etc/cups/cupsd.conf
+          etc/cups/snmp.conf
+          etc/cups/printers.conf
+          etc/cups/classes.conf
+          etc/cups/cups-files.conf
+          etc/cups/subscriptions.conf
+          etc/logrotate.d/cups
+          etc/pam.d/cups)
+  depends=('acl' 'linux-pam' "libcups>=${pkgver}" 'bc'
+           'dbus' 'libpaper' 'hicolor-icon-theme')
+  optdepends=('xdg-utils: xdg .desktop file support'
+              'colord: for ICC color profile support')
+
+  cd ${pkgbase}-${pkgver}
+  make BUILDROOT=${pkgdir} install-data install-exec
+
+  # this one we ship in the libcups pkg
+  rm -f ${pkgdir}/usr/bin/cups-config
+
+  # kill the sysv stuff
+  rm -rf ${pkgdir}/etc/rc*.d
+  rm -rf ${pkgdir}/etc/init.d
+  install -D -m644 ../cups.logrotate ${pkgdir}/etc/logrotate.d/cups
+  install -D -m644 ../cups.pam ${pkgdir}/etc/pam.d/cups
+
+  # fix perms on /var/spool and /etc
+  chmod 755 ${pkgdir}/var/spool
+  chmod 755 ${pkgdir}/etc
+
+  sed -i "s:#User 9:User 9:" ${pkgdir}/etc/cups/cups-files.conf{,.default}
+  sed -i "s:#Group 9:Group 19:" ${pkgdir}/etc/cups/cups-files.conf{,.default}
+
+  # install ssl directory where to store the certs, solves some samba issues
+  install -dm700 -g 19 ${pkgdir}/etc/cups/ssl
+  # remove directory from package, it will be recreated at each server start
+  rm -rf ${pkgdir}/run
+
+  # install some more configuration files that will get filled by cupsd
+  touch ${pkgdir}/etc/cups/printers.conf
+  touch ${pkgdir}/etc/cups/classes.conf
+  touch ${pkgdir}/etc/cups/subscriptions.conf
+  chgrp -R 19 ${pkgdir}/etc/cups
+
+  # fix .desktop file
+  sed -i 's|^Exec=htmlview http://localhost:631/|Exec=xdg-open http://localhost:631/|g' ${pkgdir}/usr/share/applications/cups.desktop
+
+  # compress some driver files, adopted from Fedora
+  find ${pkgdir}/usr/share/cups/model -name "*.ppd" | xargs gzip -n9f
+
+  # remove client.conf man page
+  rm -f ${pkgdir}/usr/share/man/man5/client.conf.5
+
+  # comment out all conversion rules which use any of the removed filters that are now part of cups-filters
+  perl -p -i -e 's:^(.*\s+bannertops\s*)$:#\1:' $pkgdir/usr/share/cups/mime/mime.convs
+
+  # comment out unnecessary PageLogFormat entry
+  sed -i -e 's:PageLogFormat:#PageLogFormat:' $pkgdir/etc/cups/cupsd.conf*
+
+  install -vdm755 ${pkgdir}/etc/rc.d/{init.d,rc{0..6}.d}
+  install -m 754 ${srcdir}/init.d/cups ${pkgdir}/etc/rc.d/init.d/
+  ln -sf  ../init.d/cups ${pkgdir}/etc/rc.d/rc0.d/K00cups
+  ln -sf  ../init.d/cups ${pkgdir}/etc/rc.d/rc1.d/K00cups
+  ln -sf  ../init.d/cups ${pkgdir}/etc/rc.d/rc2.d/S25cups
+  ln -sf  ../init.d/cups ${pkgdir}/etc/rc.d/rc3.d/S25cups
+  ln -sf  ../init.d/cups ${pkgdir}/etc/rc.d/rc4.d/S25cups
+  ln -sf  ../init.d/cups ${pkgdir}/etc/rc.d/rc5.d/S25cups
+  ln -sf  ../init.d/cups ${pkgdir}/etc/rc.d/rc6.d/K00cups
+
+  install -vdm755 ${pkgdir}/etc/kernel/config.d
+  install -vm644 ${srcdir}/cups.kernel.conf ${pkgdir}/etc/kernel/config.d/cups.conf
+}
+
+md5sums=('3d22d747403ec5dcd0b66d1332564816'
+         'SKIP'
+         'fc8286f185e2cc5f7e1f6843bf193e2b'
+         'd0ae7cb7968644cf6515a757e5d6ccf2'
+         'a75a71bae0af06b59ca67e3e80c91fcc'
+         '3ba9e3410df1dc3015463d615ef91b3b'
+         '39dd3141991c3052b73f59ece70e1ea6'
+         '451609db34f95209d64c38474de27ce1'
+         'e42820dd62ef79f1a2f0448bf06393d2'
+         'b63a49141fac3d4706988be6c9bcf59e')

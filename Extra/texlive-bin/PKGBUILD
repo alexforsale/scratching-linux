@@ -1,0 +1,485 @@
+#-*-mode:sh-*-
+pkgname=('texlive-bin' 'libsynctex')
+pkgver=2018.48691
+pkgrel=1
+license=('GPL')
+arch=('x86_64')
+_makedeps=('poppler' 'zziplib' 'libpng' 't1lib' 'gd' 'clisp' 'cairo' 'freetype2' 'graphite' 'harfbuzz'
+           'icu' 'libpaper' 'potrace' 'pixman' 'harfbuzz-icu')
+makedepends=('git' 'libsigsegv' 'libjpeg' 'gmp' 'mpfr' 'perl' 'ffcall')
+url='http://tug.org/texlive/'
+_commit=f68b0992e13a2e155d71beb3e016ea4139023224  # texlive-2018.2
+source=("git+https://github.com/Tex-Live/texlive-source.git#commit=${_commit}"
+        "poppler-compat-fixes-up-to-0.70.patch"
+        "luatex-poppler-0.70-const-fixes.patch"
+        "texlive-poppler-0.71.patch"
+        "freetype-pkgconfig.patch"
+        "synctex-missing-header.patch"
+        "texlive.conf"
+        "texlive.sh")
+
+_confargs=()
+for _m in "${_makedeps[@]}";do
+  if [[ -n "$(pacman -Ss "^${_m}$" 2>/dev/null)" ]];then
+    makedepends+=( "${_m}")
+  else
+    optdepends+=( "${_m}")
+  fi
+  case ${_makedeps[@]} in
+      'poppler')
+          [[ -n "$(pacman -Ss "^poppler$" 2>/dev/null)" ]] && _confargs+=( '--with-system-poppler' '--with-system-xpdf');;
+      'zziplib')
+          [[ -n "$(pacman -Ss "^zziplib$" 2>/dev/null)" ]] && _confargs+=( '--with-system-zziplib');;
+      'libpng')
+          [[ -n "$(pacman -Ss "^libpng$" 2>/dev/null)" ]] && _confargs+=( '--with-system-pnglib');;
+      't1lib')
+          [[ -n "$(pacman -Ss "^t1lib$" 2>/dev/null)" ]] && _confargs+=( '--with-system-t1lib');;
+      'gd')
+          [[ -n "$(pacman -Ss "^gd$" 2>/dev/null)" ]] && _confargs+=( '--with-system-gd');;
+      'clisp')
+          [[ -n "$(pacman -Ss "^clisp$" 2>/dev/null)" ]] && _confargs+=( '--with-clisp-runtime=default');;
+      'cairo')
+          [[ -n "$(pacman -Ss "^cairo$" 2>/dev/null)" ]] && _confargs+=( '--with-system-cairo');;
+      'freetype2')
+          [[ -n "$(pacman -Ss "^freetype2$" 2>/dev/null)" ]] && _confargs+=( '--with-system-freetype2' '--with-freetype2-libdir=/usr/lib'
+                                                                             '--with-freetype2-include=/usr/include/freetype2');;
+      'graphite')
+          [[ -n "$(pacman -Ss "^graphite$" 2>/dev/null)" ]] && _confargs+=( '--with-system-graphite');;
+      'harfbuzz')
+          [[ -n "$(pacman -Ss "^harfbuzz$" 2>/dev/null)" ]] && _confargs+=( '--with-system-harfbuzz');;
+      'icu')
+          [[ -n "$(pacman -Ss "^icu$" 2>/dev/null)" ]] && _confargs+=( '--with-system-icu');;
+      'libpaper')
+          [[ -n "$(pacman -Ss "^libpaper$" 2>/dev/null)" ]] && _confargs+=( '--with-system-libpaper');;
+      'potrace')
+          [[ -n "$(pacman -Ss "^potrace$" 2>/dev/null)" ]] && _confargs+=( '--with-system-potrace');;
+      'pixman')
+          [[ -n "$(pacman -Ss "^pixman$" 2>/dev/null)" ]] && _confargs+=( '--with-system-pixman');;
+  esac
+done
+
+prepare() {
+  cd "$srcdir/texlive-source"
+
+  # Synctex "make install" misses synctex_version.h
+  patch -Np1 -i "${srcdir}/synctex-missing-header.patch"
+
+  # Freetype2 2.9.1 package no longer has freetype-config
+  patch -Np1 -i "${srcdir}/freetype-pkgconfig.patch"
+
+  ./reautoconf
+
+  # t4ht expects to be un /usr/share/texmf/bin/t4ht (FS#27251)
+  sed -i s/SELFAUTOPARENT/TEXMFROOT/ texk/tex4htk/t4ht.c
+
+  # upstream compat fixes for latest poppler
+  patch -Np1 -i "${srcdir}/poppler-compat-fixes-up-to-0.70.patch"
+  if [[ -n "$(pacman -Ss "^poppler$" 2>/dev/null)" ]];then
+      # fix build with poppler 0.72
+      find texk/web2c/{lua,pdf}texdir -type f | xargs sed -e 's|gTrue|true|g' -e 's|gFalse|false|g' -e 's|GBool|bool|g' -e 's|getCString|c_str|g' -i
+      patch -p1 -i "${srcdir}/texlive-poppler-0.71.patch"
+      cp -pv texk/web2c/pdftexdir/pdftoepdf{-poppler0.70.0,}.cc
+      cp -pv texk/web2c/pdftexdir/pdftosrc{-newpoppler,}.cc
+
+      # luatex switched from poppler to pplib in newer versions so
+      # upstream fixes aren't available; hopefully this is correct
+      patch -Np1 -i "${srcdir}/luatex-poppler-0.70-const-fixes.patch"
+  fi
+}
+
+build() {
+  cd "$srcdir/texlive-source"
+
+  #############################################################
+  ### configure
+  mkdir -p Work
+  cd Work
+  echo "--> Initial configuration..."
+  export TEXARCH=$(uname -m | sed -e 's/i.86/i386/' -e 's/$/-linux/')
+  # we use temporary prefix to avoid messing the existing
+  # $pkgdir/usr/share/texmf tree
+  ../configure --prefix=/opt/texlive/2018 \
+               --sbindir=/opt/texlive/2018/bin/${TEXARCH} \
+               --bindir=/opt/texlive/2018/bin/${TEXARCH} \
+               --sysconfdir=/etc/opt \
+               --sharedstatedir=/var/opt/texmf \
+               --datarootdir=/opt/texlive/2018 \
+               --datadir=/opt/texlive/2018 \
+               --localstatedir=/var/opt/texmf \
+               --includedir=/opt/texlive/2018/include \
+               --infodir=/opt/texlive/2018/info \
+               --libdir=/opt/texlive/2018/lib \
+               --disable-native-texlive-build \
+               --mandir=/opt/texlive/2018/man \
+               --with-banner-add="/Linuxfromscratch" \
+               --disable-multiplatform \
+               --disable-dialog \
+               --disable-psutils \
+               --disable-t1utils \
+               --disable-bibtexu \
+               --disable-xz \
+               --enable-shared \
+               --disable-static \
+               --with-system-zlib \
+               --with-system-ncurses \
+               --with-system-gmp \
+               --with-system-mpfr \
+               --with-xdvi-x-toolkit=xaw \
+               --disable-dump-share \
+               --disable-aleph \
+               --enable-luatex \
+               --enable-xindy --disable-xindy-rules --disable-xindy-docs \
+               ${_confargs[@]}
+  #############################################################
+  ### make
+  echo "-------------------------------------------------------"
+  echo "--> Building the whole beast ..."
+  echo "-------------------------------------------------------"
+  make
+}
+
+package_libsynctex() {
+  pkgdesc='Library for synchronization between TeX files and resulting file'
+  depends=('glibc' 'zlib')
+
+  cd "${srcdir}/texlive-source/Work"
+  make -C texk/web2c DESTDIR="${pkgdir}" \
+       install-data-am install-libLTLIBRARIES
+
+  install -dm 755 "${pkgdir}"/opt/lib/pkgconfig
+  pushd "${pkgdir}"/opt/lib/pkgconfig
+  ln -sv ../../texlive/2018/lib/pkgconfig/synctex.pc synctex.pc
+  popd
+}
+
+package_texlive-bin() {
+  pkgdesc="TeX Live binaries"
+  depends=('libsigsegv' 'gmp' 'mpfr' 'libsynctex')
+  depends+=( ${_makedeps[@]})
+  provides=('lcdf-typetools' 'kpathsea' 'xindy')
+  optdepends=('ed: for texconfig'
+              'biber: for bibliography processing')
+  options=('!strip')
+
+  cd "$srcdir/texlive-source"
+
+  #############################################################
+  ### install
+  # fixes for xindy
+  find utils/xindy -name Makefile -exec sed -i -e "s|^prefix =.\+$|prefix = $pkgdir/opt/texlive/2018|" -e "s|^mandir =.\+$|mandir = \${prefix}/opt/texlive/2018/man|" -e "s|^datadir =.\+$|datadir = \${datarootdir}/texmf|" -e "s|^docdir =.\+$|docdir = \${datadir}/doc/xindy|" '{}' \;
+
+  echo "-------------------------------------------------------"
+  echo "--> Proceeding with make install ..."
+  echo "-------------------------------------------------------"
+  cd Work
+  make DESTDIR="${pkgdir}" texmf="$pkgdir"/opt/texlive/2018/texmf install
+  rm -rf "${pkgdir}"/opt/texlive/2018/texmf-dist
+
+  ## symlink engines by hand. texlinks has moved to texlive-core...
+  mkdir -p ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}
+  ln -s eptex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/platex
+  ln -s euptex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/uplatex
+  ln -s luatex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/dvilualatex
+  ln -s luatex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/dviluatex
+  ln -s luatex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/lualatex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/amstex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/cslatex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/csplain
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/eplain
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/etex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/jadetex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/latex
+  ln -s tex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/lollipop
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/mex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/mllatex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/mltex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/pdfetex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/pdfcslatex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/pdfcsplain
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/pdfjadetex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/pdflatex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/pdfmex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/pdfxmltex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/texsis
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/utf8mex
+  ln -s pdftex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/xmltex
+  ln -s xetex ${pkgdir}/opt/texlive/2018/bin/${TEXARCH}/xelatex
+
+  #############################################################
+  # remove dangling symlinks
+  _bibtexextra_scripts="
+bbl2bib
+bib2gls
+bibdoiadd
+bibexport
+bibmradd
+biburl2doi
+bibzbladd
+convertgls2bib
+listbib
+ltx2crossrefxml
+multibibliography
+urlbst
+"
+  _core_scripts="
+a2ping
+a5toa4
+adhocfilelist
+afm2afm
+allcm
+allec
+allneeded
+arara
+arlatex
+autoinst
+bundledoc
+checkcites
+checklistings
+chkweb
+cjk-gs-integrate
+context
+contextjit
+ctanify
+ctanupload
+ctan-o-mat
+de-macro
+depythontex
+deweb
+dosepsbin
+dtxgen
+dvi2fax
+dviasm
+dviinfox
+dvired
+e2pall
+epstopdf
+findhyph
+fmtutil
+fmtutil-sys
+fmtutil-user
+fontinst
+fragmaster
+ht
+htcontext
+htlatex
+htmex
+httex
+httexi
+htxelatex
+htxetex
+installfont-tl
+jfmutil
+kpsepath
+kpsetool
+kpsewhere
+kpsexpand
+latex-git-log
+latex-papersize
+latex2man
+latex2nemeth
+latexdef
+latexdiff
+latexdiff-vc
+latexfileversion
+latexindent
+latexmk
+latexpand
+latexrevise
+listings-ext.sh
+ltxfileinfo
+ltximg
+lua2dox_filter
+luaotfload-tool
+luatools
+lwarpmk
+make4ht
+match_parens
+mf2pt1
+mk4ht
+mkjobtexmf
+mkt1font
+mktexfmt
+mptopdf
+mtxrun
+mtxrunjit
+ot2kpx
+pdf180
+pdf270
+pdf90
+pdfatfi
+pdfbook
+pdfbook2
+pdfcrop
+pdfflip
+pdfjam
+pdfjam-pocketmod
+pdfjam-slides3up
+pdfjam-slides6up
+pdfjoin
+pdflatexpicscale
+pdfnup
+pdfpun
+pdfxup
+pfarrei
+pkfix
+pkfix-helper
+ps2eps
+ps2frag
+pslatex
+purifyeps
+pythontex
+repstopdf
+rpdfcrop
+rungs
+simpdftex
+srcredact
+sty2dtx
+tex4ebook
+texconfig
+texconfig-dialog
+texconfig-sys
+texcount
+texdef
+texdiff
+texdirflatten
+texdoc
+texdoctk
+texexec
+texfot
+texindy
+texlinks
+texliveonfly
+texloganalyser
+texmfstart
+texosquery
+texosquery-jre5
+texosquery-jre8
+thumbpdf
+tlcockpit
+tlshell
+typeoutfileinfo
+updmap
+updmap-sys
+updmap-user
+vpl2ovp
+vpl2vpl
+xhlatex
+xindy
+"
+  _games_scripts="rubikrotation"
+  _humanities_scripts="diadia"
+  _langcyrillic_scripts="rubibtex rumakeindex"
+  _langextra_scripts="ebong"
+  _langgreek_scripts="mkgrkindex"
+  _langjapanese_scripts="convbkmk ptex2pdf
+kanji-fontmap-creator
+kanji-config-updmap
+kanji-config-updmap-sys
+kanji-config-updmap-user
+"
+  _langkorean_scripts="jamo-normalize komkindex ttf2kotexfont"
+  _latexextra_scripts="
+authorindex
+exceltex
+l3build
+makedtx
+makeglossaries
+makeglossaries-lite
+pdfannotextractor
+perltex
+ps4pdf
+splitindex
+svn-multi
+vpe
+wordcount
+yplan"
+  _music_scripts="lily-glyph-commands lily-image-commands lily-rebuild-pdfs
+m-tx musixtex musixflx pmxchords"
+  _pictures_scripts="
+cachepic
+epspdf
+epspdftk
+fig4latex
+getmapdl
+mathspic
+mkpic
+pn2pdf"
+  _pstricks_scripts="pedigree pst2pdf"
+  _science_scripts="pygmentex ulqda"
+  for s in \
+    ${_bibtexextra_scripts} \
+      ${_core_scripts}        \
+      ${_games_scripts}       \
+      ${_htmlxml_scripts}     \
+      ${_humanities_scripts}   \
+      ${_langcyrillic_scripts} \
+      ${_langextra_scripts}    \
+      ${_langgreek_scripts}    \
+      ${_langjapanese_scripts} \
+      ${_langkorean_scripts} \
+      ${_latexextra_scripts} \
+      ${_music_scripts}      \
+      ${_pictures_scripts}   \
+      ${_pstricks_scripts}   \
+      ${_science_scripts}    \
+      tlmgr; do
+    ! readlink -e "$pkgdir"/opt/texlive/2018/bin/${TEXARCH}/$s && rm "$pkgdir"/opt/texlive/2018/bin/${TEXARCH}/$s
+  done
+  ###################################################################
+
+  # remove libsynctex
+  rm -f "$pkgdir"/opt/texlive/2018/include/synctex/*
+  rm -f "$pkgdir"/opt/texlive/2018/lib/libsynctex.*
+  rm -f "$pkgdir"/opt/texlive/2018/lib/pkgconfig/synctex.pc
+  rm -f "$pkgdir"/opt/texlive/2018/man/man*/synctex.*
+
+  install -dm 755 "${pkgdir}/etc/ld.so.conf.d/"
+  install -v -m644 ${srcdir}/texlive.conf $pkgdir/etc/ld.so.conf.d/texlive.conf
+  install -dm 755 "${pkgdir}/etc/profile.d/"
+  install -v -m644 ${srcdir}/texlive.sh $pkgdir/etc/profile.d/texlive.sh
+
+  # symlink pkgconfig files to /opt/lib/pkgconfig
+  install -dm755 ${pkgdir}/opt/lib/pkgconfig
+  pushd ${pkgdir}/opt/lib/pkgconfig
+  for f in $(ls ${pkgdir}/opt/texlive/2018/lib/pkgconfig);do
+    ln -sv ../../texlive/2018/lib/pkgconfig/$f $f
+  done
+
+  # symlink man and info files
+  install -dm755 ${pkgdir}/opt/man
+  pushd ${pkgdir}/opt/man
+  for d in $(ls ${pkgdir}/opt/texlive/2018/man);do
+    mkdir -pv $d
+    for f in $(ls ${pkgdir}/opt/texlive/2018/man/$d);do
+      ln -sv ../../texlive/2018/man/$d/$f $d/$f
+    done
+  done
+  install -dm755 ${pkgdir}/opt/info
+  pushd ${pkgdir}/opt/info
+  for f in $(ls ${pkgdir}/opt/texlive/2018/info | grep ".info");do
+    ln -sv ../../texlive/2018/info/$f $f
+  done
+
+  # move .desktop file to /usr
+  install -dm755 ${pkgdir}/usr/share/applications
+  mv ${pkgdir}/opt/texlive/2018/applications/xdvi.desktop \
+     ${pkgdir}/usr/share/applications/
+  rm -r ${pkgdir}/opt/texlive/2018/applications/
+}
+
+sha256sums=('SKIP'
+            '1a76b4be5544e431b60dace28169870a8b275e6d80323f9ef7f49b7da8df0b29'
+            'f1d8b23f3072001fae5f2147aa4a50520d89fbc5b683c0da10b1417e52173c7a'
+            'd8d2fde2f0978238a923b95d063adb7c84e8abde9ac808166bcfa0e3fc8a9c98'
+            'bed44f4ccda369410e90eac527cf44b8c1afda7d987ae521b4fd5edb425eef3e'
+            'b6c81eb091b5910226e0359768edd178680debee56b63ab0a3753c3429c28ab0'
+            '3753860c4007fcb0a8bc231346d8c170d536da5fc6f38c205489a4e3b8118742'
+            '7ce2b5e804812f5cfe274b3272362956a6ba8c5793a9b9c028ebcab81dcc6d8e')
+sha256sums=('SKIP'
+            '1a76b4be5544e431b60dace28169870a8b275e6d80323f9ef7f49b7da8df0b29'
+            'f1d8b23f3072001fae5f2147aa4a50520d89fbc5b683c0da10b1417e52173c7a'
+            'd8d2fde2f0978238a923b95d063adb7c84e8abde9ac808166bcfa0e3fc8a9c98'
+            'bed44f4ccda369410e90eac527cf44b8c1afda7d987ae521b4fd5edb425eef3e'
+            'b6c81eb091b5910226e0359768edd178680debee56b63ab0a3753c3429c28ab0'
+            '3753860c4007fcb0a8bc231346d8c170d536da5fc6f38c205489a4e3b8118742'
+            '7ce2b5e804812f5cfe274b3272362956a6ba8c5793a9b9c028ebcab81dcc6d8e')

@@ -1,0 +1,100 @@
+#-*-mode:sh-*-
+pkgbase=(harfbuzz)
+pkgname=(harfbuzz harfbuzz-icu)
+pkgver=2.2.0
+pkgrel=1
+pkgdesc="OpenType text shaping engine"
+url="http://www.freedesktop.org/wiki/Software/HarfBuzz"
+arch=(x86_64)
+license=(MIT)
+_deps=(graphite)
+depends=(glib2 freetype2)
+_makedeps=(gtk-doc icu gobject-introspection cairo)
+makedepends=(ragel git python)
+checkdepends=(python-fonttools python-setuptools)
+_commit=dc41ecef85b094b30c612113606597b91c55351c  # tags/2.2.0^0
+source=("git+https://anongit.freedesktop.org/git/harfbuzz#commit=$_commit")
+sha256sums=('SKIP')
+
+for _d in "${_deps[@]}";do
+  if [[ -n "$(pacman -Qq "${_d}" 2>/dev/null)" ]];then
+    depends+=( "${_d}")
+  else
+    optdepends+=( "${_d}")
+  fi
+done
+for _m in "${_makedeps[@]}";do
+  if [[ -n "$(pacman -Qq "${_m}" 2>/dev/null)" ]];then
+    makedepends+=( "${_m}")
+  else
+    optdepends+=( "${_m}")
+  fi
+done
+_confargs=('--prefix=/usr')
+for m in ${makedepends[@]};do
+  case $m in
+    gtk-doc)
+      _confargs+=( '--enable-gtk-doc');;
+    icu)
+      _confargs+=( '--with-icu');;
+    gobject-introspection)
+      _confargs+=( '--with-gobject');;
+    cairo)
+      _confargs+=( '--with-cairo');
+  esac
+done
+for d in ${depends[@]};do
+  case $d in
+    glib2)
+      _confargs+=( '--with-glib');;
+    freetype2)
+      _confargs+=( '--with-freetype');;
+    graphite)
+      _confargs+=( '--with-graphite2');;
+  esac
+done
+
+pkgver() {
+  cd $pkgbase
+  git describe --tags | sed 's/-/+/g'
+}
+
+prepare() {
+  cd $pkgbase
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure ${_confargs[@]}
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+}
+
+build() {
+  cd $pkgbase
+  make
+}
+
+check() {
+  cd $pkgbase
+  make check
+}
+
+package_harfbuzz() {
+  optdepends=('cairo: hb-view program')
+
+  cd $pkgbase
+  make DESTDIR="$pkgdir" install
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/harfbuzz/COPYING"
+
+  # Split harfbuzz-icu
+  mkdir -p ../hb-icu/usr/{include/harfbuzz,lib/pkgconfig}; cd ../hb-icu
+  mv "$pkgdir"/usr/lib/libharfbuzz-icu* ./usr/lib
+  mv "$pkgdir"/usr/lib/pkgconfig/harfbuzz-icu.pc ./usr/lib/pkgconfig
+  mv "$pkgdir"/usr/include/harfbuzz/hb-icu.h ./usr/include/harfbuzz
+}
+
+package_harfbuzz-icu() {
+  pkgdesc="$pkgdesc (ICU integration)"
+  depends=(harfbuzz icu)
+
+  mv hb-icu/* "$pkgdir"
+
+  install -Dm644 $pkgbase/COPYING "$pkgdir/usr/share/licenses/harfbuzz-icu/COPYING"
+}

@@ -1,0 +1,38 @@
+#-*-mode:sh-*-
+_pkgname=libXi
+pkgname=libxi
+pkgver=1.7.9.r8.g3e38d82
+pkgrel=1
+pkgdesc="X11 Input extension library"
+arch=('x86_64')
+url="https://xorg.freedesktop.org"
+depends=('libxext' 'inputproto')
+makedepends=('pkgconfig' 'xorg-util-macros' 'libxfixes' 'automake')
+license=('custom')
+source=(xorg/lib/libXi::git://anongit.freedesktop.org/git/xorg/lib/libXi)
+sha256sums=('SKIP')
+groups=('xorg')
+
+pkgver() {
+  cd "$_pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/$_pkgname.//g"
+}
+
+prepare(){
+  cd "$_pkgname"
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr --sysconfdir=/etc --disable-static
+}
+
+build() {
+  cd "$_pkgname"
+  make
+}
+
+package() {
+  cd "$_pkgname"
+  make DESTDIR="${pkgdir}" install
+
+  install -m755 -d "${pkgdir}/usr/share/licenses/${pkgname}"
+  install -m644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/"
+}

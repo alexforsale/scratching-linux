@@ -1,0 +1,38 @@
+#-*-mode:sh-*-
+_pkgname=libXv
+pkgname=libxv
+pkgver=1.0.11.r5.g03a6f59
+pkgrel=1
+pkgdesc="X11 Video extension library"
+arch=('x86_64')
+license=('custom')
+url="https://xorg.freedesktop.org/"
+depends=('libxext' 'videoproto')
+makedepends=('pkgconfig')
+source=(xorg/lib/libXv::git://anongit.freedesktop.org/git/xorg/lib/libXv)
+sha256sums=('SKIP')
+groups=('xorg')
+
+pkgver() {
+  cd "$_pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/$_pkgname.//g"
+}
+
+prepare(){
+  cd "$_pkgname"
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr --disable-static 
+}
+
+build() {
+  cd "$_pkgname"
+  make
+}
+
+package() {
+  cd "$_pkgname"
+  make DESTDIR="${pkgdir}" install
+
+  install -m755 -d "${pkgdir}/usr/share/licenses/${pkgname}"
+  install -m644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/"
+}

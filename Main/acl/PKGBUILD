@@ -1,0 +1,43 @@
+#-*- mode: sh -*-
+pkgname=acl
+pkgver=2.2.53
+pkgrel=1
+pkgdesc="Access control list utilities, libraries and headers"
+arch=('x86_64')
+url="http://savannah.nongnu.org/projects/acl"
+license=('LGPL')
+depends=('attr>=2.4.46')
+replaces=('xfsacl')
+provides=('xfsacl')
+conflicts=('xfsacl')
+source=(https://download.savannah.gnu.org/releases/$pkgname/$pkgname-$pkgver.tar.gz)
+groups=('lfs-base')
+
+prepare(){
+  cd $pkgname-$pkgver
+  ./configure --prefix=/usr \
+              --libexecdir=/usr/lib \
+              --bindir=/bin \
+              --disable-static \
+              --docdir=/usr/share/doc/${pkgname}-${pkgver}
+}
+build() {
+  cd $pkgname-$pkgver
+  make
+}
+
+check(){
+  cd $pkgname-$pkgver
+  make check
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="${pkgdir}" install
+  
+  install -v -dm755 "$pkgdir"/lib
+  mv -v "$pkgdir"/usr/lib/libacl.so.* "$pkgdir"/lib
+  ln -sfv ../../lib/$(readlink "$pkgdir"/usr/lib/libacl.so) "$pkgdir"/usr/lib/libacl.so
+}
+
+md5sums=('007aabf1dbb550bcddde52a244cd1070')

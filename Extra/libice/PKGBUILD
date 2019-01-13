@@ -1,0 +1,37 @@
+#-*-mode:sh-*-
+_pkgname=libICE
+pkgname=libice
+pkgver=1.0.9.r21.gccbcae7
+pkgrel=1
+pkgdesc="X11 Inter-Client Exchange library"
+arch=('x86_64')
+url="https://xorg.freedesktop.org/"
+depends=('glibc' 'xproto')
+makedepends=('xtrans>=1.2.5' 'xorg-util-macros')
+source=(xorg/lib/libICE::git://anongit.freedesktop.org/git/xorg/lib/libICE)
+license=('custom')
+sha256sums=('SKIP')
+groups=('xorg')
+
+pkgver() {
+  cd "$_pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/$_pkgname.//g"
+}
+
+prepare(){
+  cd "$_pkgname"
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr --sysconfdir=/etc
+}
+
+build() {
+  cd "$_pkgname"
+  make
+}
+
+package() {
+  cd "$_pkgname"
+  make DESTDIR="${pkgdir}" install
+
+  install -Dm644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/COPYING"
+}

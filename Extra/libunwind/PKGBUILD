@@ -1,0 +1,41 @@
+#-*-mode:sh-*-
+pkgname=libunwind
+pkgver=1.2.1
+pkgrel=1
+pkgdesc='Portable and efficient C programming interface (API) to determine the call-chain of a program'
+arch=('x86_64')
+url='http://www.nongnu.org/libunwind/'
+license=('GPL')
+depends=('glibc' 'xz')
+_makedeps=('texlive-core')
+makedepends=()
+source=("http://download.savannah.gnu.org/releases/$pkgname/$pkgname-$pkgver.tar.gz"{,.sig})
+sha512sums=('af7c280d2a963779a4a2711887618bc96383011e4e5d52e4085aa7fb351e55e357468f6ff85e66a216f1c6826538f498335a917a5970575c93be74c96316319b'
+            'SKIP')
+validpgpkeys=('5C96BDEAF5F47FB02BD4F6B965D98560914F3F48'  # Arun Sharma
+              '1675C8DA2EF907FB116EB709EC52B396E6874AF2') # Dave Watson
+
+for _m in "${_makedeps[@]}";do
+  if [[ -n "$(pacman -Ss "^${_m}$" 2>/dev/null)" ]];then
+    depends+=( "${_m}")
+  else
+    optdepends+=( "${_m}")
+  fi
+done
+
+build() {
+  cd $pkgname-$pkgver
+  ./configure --prefix=/usr
+  make
+}
+
+check() {
+  cd $pkgname-$pkgver
+  # This function is ``supposed'' to fail. Upstream know, but haven't fixed it.
+  make check || :
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
+}

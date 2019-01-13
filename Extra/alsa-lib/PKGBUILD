@@ -1,0 +1,29 @@
+#-*-mode:sh-*-
+pkgname=alsa-lib
+pkgver=1.1.7
+pkgrel=1
+pkgdesc="An alternative implementation of Linux sound support"
+arch=('x86_64')
+url="http://www.alsa-project.org"
+depends=('glibc')
+optdepends=('python2: for python smixer plugin')
+makedepends=('python2')
+license=('LGPL')
+source=(ftp://ftp.alsa-project.org/pub/lib/$pkgname-$pkgver.tar.bz2)
+
+prepare(){
+  cd "$srcdir/$pkgname-$pkgver"
+  ./configure --without-debug --prefix=/usr --with-pythonlibs="-lpthread -lm -ldl -lpython2.7" --with-pythonincludes=-I/usr/include/python2.7
+}
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+  make
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+  make DESTDIR="$pkgdir" install
+}
+
+sha512sums=('7cc81464d876a137e9ac9700420bfff7cd528338bdc6e0bdbe313d45c5b97c81f1a9483df0556fe390d54a9db747fbec62e843b42d2cbc740d5a91b015714f6c')

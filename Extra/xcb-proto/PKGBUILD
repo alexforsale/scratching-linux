@@ -1,0 +1,41 @@
+#-*-mode:sh-*-
+_pkgname=proto
+pkgname=xcb-proto
+pkgver=1.13.r1.g55c7baa
+pkgrel=1
+pkgdesc="XML-XCB protocol descriptions"
+arch=(any)
+url="https://xcb.freedesktop.org/"
+license=('custom')
+makedepends=('python' 'libxml2')
+source=(xorg/xcb/proto::git://anongit.freedesktop.org/git/xcb/proto)
+sha512sums=('SKIP')
+groups=('xorg')
+
+pkgver() {
+  cd "$_pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/${pkgname/-/.}.//g"
+}
+
+prepare(){
+  cd $_pkgname
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr
+}
+
+build() {
+  cd $_pkgname
+  make
+}
+
+check() {
+  cd $_pkgname
+  make -k check || /bin/true
+}
+
+package() {
+  cd $_pkgname
+  make DESTDIR="$pkgdir" install
+  install -m755 -d "$pkgdir/usr/share/licenses/$pkgname"
+  install -m644 COPYING "$pkgdir/usr/share/licenses/$pkgname"
+}

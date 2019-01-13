@@ -1,0 +1,45 @@
+#-*-mode:sh-*-
+_pkgname=util-renderutil
+pkgname=xcb-util-renderutil
+pkgver=0.3.9.r0.g0317caf
+pkgrel=1
+pkgdesc="Utility libraries for XC Binding - Convenience functions for the Render extension"
+arch=('x86_64')
+url="https://xcb.freedesktop.org"
+license=('custom')
+depends=('libxcb>=1.7')
+makedepends=('xorg-util-macros' 'doxygen')
+source=("xcb/util-renderutil::git://anongit.freedesktop.org/git/xcb/util-renderutil/"
+        'LICENSE')
+sha512sums=('SKIP'
+            '62f83468f9d9503a5a8c1ebaac78cbaefe3c485f8bfd7192817ec59254872fe2914ed66ae8b9e7f7a6ef5af283048c11390f44eb8f0f70b1c136ef5c75282e8c')
+
+pkgver() {
+  cd "$_pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/$_pkgname.//g"
+}
+
+prepare(){
+  cd "$_pkgname"
+  git submodule update --init
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr --disable-static --with-doxygen
+}
+
+build() {
+  cd "$_pkgname"
+  make
+}
+
+check() {
+  cd "$_pkgname"
+  make check
+}
+
+package() { 
+  cd "$_pkgname"
+  make DESTDIR="${pkgdir}" install
+
+  install -D -m644 "${srcdir}/LICENSE" \
+          "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}

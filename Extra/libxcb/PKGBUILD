@@ -1,0 +1,47 @@
+#-*-mode:sh-*-
+pkgname=libxcb
+pkgver=1.13.1.r1.g542befe
+pkgrel=1
+pkgdesc="X11 client-side library"
+arch=('x86_64')
+url="https://xcb.freedesktop.org/"
+depends=('xcb-proto>=1.12' 'libxdmcp' 'libxau')
+makedepends=('libxslt' 'python' 'xorg-util-macros')
+license=('custom')
+source=(xorg/xcb/libxcb::git://anongit.freedesktop.org/git/xcb/libxcb
+        libxcb-1.1-no-pthread-stubs.patch)
+sha256sums=('SKIP'
+            '21bf86a40e4038c52c2a8c57f76b5f10e211e27562cce7526b4bb6fd025dd0c3')
+groups=('xorg')
+
+pkgver() {
+  cd "$pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/${pkgname/-/.}.//g"
+}
+
+prepare() {
+  cd "$pkgname"
+  patch -Np1 -i ../libxcb-1.1-no-pthread-stubs.patch
+  autoreconf -vfi
+  ./configure --prefix=/usr \
+              --enable-xinput \
+              --enable-xkb \
+              --disable-static
+}
+
+build() {
+  cd "$pkgname"
+  make -j1
+}
+
+check() {
+  cd $pkgname
+  make -k check
+}
+
+package() {
+  cd "$pkgname"
+  make DESTDIR="$pkgdir" install
+  install -m755 -d "$pkgdir/usr/share/licenses/$pkgname"
+  install -m644 COPYING "$pkgdir/usr/share/licenses/$pkgname"
+}

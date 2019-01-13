@@ -1,0 +1,73 @@
+#-*- mode: sh -*-
+pkgname=bash
+pkgver=4.4.18
+pkgrel=1
+pkgdesc='The GNU Bourne Again shell'
+arch=(x86_64)
+license=(GPL)
+url='http://www.gnu.org/software/bash/bash.html'
+backup=(etc/bashrc, etc/bash_logout etc/skel/.bash{rc,_profile,_logout})
+depends=('readline>=7.0' 'glibc' 'ncurses')
+optdepends=('bash-completion: for tab completion')
+provides=('sh')
+source=(http://ftp.gnu.org/gnu/bash/bash-${pkgver}.tar.gz
+        dot.bashrc
+        dot.bash_profile
+        dot.bash_logout
+        system.bashrc
+        system.bash_logout
+        bash_completion.sh
+       )
+groups=('lfs-base')
+
+prepare() {
+  cd $pkgname-$pkgver
+
+  _bashconfig=(-DSYS_BASHRC=\'\"/etc/bashrc\"\'
+               -DSYS_BASH_LOGOUT=\'\"/etc/bash_logout\"\'
+               -DNON_INTERACTIVE_LOGIN_SHELLS)
+  export CFLAGS="${CFLAGS} ${_bashconfig[@]}"
+
+  ./configure --prefix=/usr --without-bash-malloc --with-installed-readline \
+              --docdir=/usr/share/doc/${pkgname}-${pkgver}
+}
+
+build() {
+  cd $pkgname-$pkgver
+  make
+}
+
+check() {
+  make -C $pkgname-$pkgver check
+}
+
+package() {
+  make -C $pkgname-$pkgver DESTDIR="$pkgdir" install
+
+  install -v -dm755 "$pkgdir"/bin
+  mv -vf "$pkgdir"/usr/bin/bash "$pkgdir"/bin
+  ln -s bash "$pkgdir/bin/sh"
+  ln -s ../../bin/bash "$pkgdir/usr/bin/sh"
+  ln -s ../../bin/bash "$pkgdir/usr/bin/bash"
+
+  # system-wide configuration files
+  install -v -Dm644 system.bashrc "$pkgdir/etc/bashrc"
+  install -v -Dm644 system.bash_logout "$pkgdir/etc/bash_logout"
+  install -v -dm755 "$pkgdir/etc/bash_completion.d/"
+  install -v -dm755 "$pkgdir/etc/profile.d/"
+  install -v -Dm644 bash_completion.sh "$pkgdir/etc/profile.d/bash_completion.sh"
+  
+  # user configuration file skeletons
+  install -v -dm755 "$pkgdir/etc/skel/"
+  install -v -m644 dot.bashrc "$pkgdir/etc/skel/.bashrc"
+  install -v -m644 dot.bash_profile "$pkgdir/etc/skel/.bash_profile"
+  install -v -m644 dot.bash_logout "$pkgdir/etc/skel/.bash_logout"
+}
+
+md5sums=('518e2c187cc11a17040f0915dddce54e'
+         '646ca28ca35dffaed560924a2ba3deb0'
+         '0bca0019c23df318e21a0326ba81af17'
+         'f70bbec388eac3b99a99718b96b6d4c6'
+         'aa3b01968fe25e4b942a7ad3e3d47c51'
+         '18f5d7f471486927931da64c06da809c'
+         'bd1247f39c4990ae1d1a163b4a93f280')

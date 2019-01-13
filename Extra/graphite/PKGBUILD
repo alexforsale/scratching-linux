@@ -1,0 +1,78 @@
+#-*-mode:sh-*-
+pkgname=graphite
+pkgver=1.3.12
+pkgrel=1
+arch=('x86_64')
+url="https://github.com/silnrsi/graphite"
+pkgdesc='reimplementation of the SIL Graphite text processing engine'
+license=('LGPL' 'GPL' 'custom')
+depends=('gcc-libs')
+_makedeps=('doxygen' 'dblatex' 'graphviz' 'asciidoc')
+makedepends=('cmake' 'freetype2' 'python2')
+checkdepends=('python2-fonttools')
+options=('!emptydirs')
+source=(https://github.com/silnrsi/graphite/releases/download/${pkgver}/graphite2-${pkgver}.tgz)
+sha1sums=('9efb65423924f0c204f7b208af8567ce1284cd8d')
+
+for _m in "${_makedeps[@]}";do
+  if [[ -n "$(pacman -Qq "${_m}" 2>/dev/null)" ]];then
+    depends+=( "${_m}")
+  else
+    optdepends+=( "${_m}")
+  fi
+done
+
+prepare() {
+  cd "${srcdir}"
+
+  # python2 fixes
+  sed -i "s:\/usr\/bin\/python:\/usr\/bin\/python2:" graphite2-${pkgver}/tests/{corrupt.py,defuzz,fnttxtrender,fuzzbidi,fuzztest,hbspeeds,jsoncmp}
+
+  mkdir build
+  cd build
+  cmake -G "Unix Makefiles" ../graphite2-${pkgver} \
+	-DCMAKE_C_FLAGS:STRING="${CFLAGS}" \
+	-DCMAKE_INSTALL_PREFIX=/usr \
+	-DCMAKE_BUILD_TYPE:STRING=Release \
+	-DGRAPHITE2_COMPARE_RENDERER=OFF \
+
+        # fix unwanted -O3 cflag (taken form Debian)
+        find . -type f ! -name "rules" ! -name "changelog" -exec sed -i -e 's/\-O3//g' {} \;
+}
+
+build() {
+  cd build
+  make 
+  if [[ -n "$(pacman -Qq doxygen 2>/dev/null)" ]] &&
+       [[ -n "$(pacman -Qq dblatex 2>/dev/null)" ]] &&
+       [[ -n "$(pacman -Qq graphviz 2>/dev/null)" ]] &&
+       [[ -n "$(pacman -Qq asciidoc 2>/dev/null)" ]];then
+    make -j1 docs
+  fi
+}
+
+check() {
+  cd "${srcdir}"/build
+  # python2 fixes
+  sed -i "s:python:python2:g" tests/CTestTestfile.cmake
+  ctest || true
+}
+
+package() {
+  cd "${srcdir}"/build
+  make DESTDIR="$pkgdir/" install
+  if [[ -n "$(pacman -Qq doxygen 2>/dev/null)" ]] &&
+       [[ -n "$(pacman -Qq dblatex 2>/dev/null)" ]] &&
+       [[ -n "$(pacman -Qq graphviz 2>/dev/null)" ]] &&
+       [[ -n "$(pacman -Qq asciidoc 2>/dev/null)" ]];then
+    # install doc files
+    mkdir -p "${pkgdir}"/usr/share/doc/graphite2/api
+    cp -vrf doc/doxygen/{html,latex/refman.pdf} "${pkgdir}"/usr/share/doc/graphite2/api
+    cp -vrf doc/{GTF,manual}.html "${pkgdir}"/usr/share/doc/graphite2
+  fi
+  
+  # licenses
+  mkdir -p "${pkgdir}"/usr/share/licenses/${pkgname}
+  install -m644 "${srcdir}"/graphite2-${pkgver}/COPYING "${pkgdir}"/usr/share/licenses/${pkgname}/
+}
+sha1sums=('9efb65423924f0c204f7b208af8567ce1284cd8d')

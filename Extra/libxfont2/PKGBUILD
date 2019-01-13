@@ -1,0 +1,37 @@
+#-*-mode:sh-*-
+_pkgname=libXfont
+pkgname=libxfont2
+pkgver=.2.0.3.r2.g66a2668
+pkgrel=1
+pkgdesc="X11 font rasterisation library"
+arch=(x86_64)
+url="https://xorg.freedesktop.org/"
+license=('custom')
+depends=('freetype2' 'libfontenc' 'xproto' 'fontsproto')
+makedepends=('xorg-util-macros' 'xtrans')
+source=(xorg/lib/libXfont::git://anongit.freedesktop.org/git/xorg/lib/libXfont)
+sha256sums=('SKIP')
+groups=('xorg')
+
+pkgver() {
+  cd "$_pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/$_pkgname.//g"
+}
+
+prepare(){
+  cd "$_pkgname"
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr --sysconfdir=/etc --disable-static
+}
+
+build() {
+  cd "$_pkgname"
+  make
+}
+
+package() {
+  cd "$_pkgname"
+  make DESTDIR="${pkgdir}" install
+  install -m755 -d "${pkgdir}/usr/share/licenses/${pkgname}"
+  install -m644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/"
+}

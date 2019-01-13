@@ -1,0 +1,60 @@
+#-*-mode:sh-*-
+pkgbase=gdb
+# gdb-common is a package that contains files common for all cross compiled versions
+# of gdb (for arm/avr/...)
+pkgname=(gdb gdb-common)
+pkgver=8.2
+pkgrel=1
+pkgdesc='The GNU Debugger'
+arch=(x86_64)
+url='http://www.gnu.org/software/gdb/'
+license=(GPL3)
+makedepends=(texinfo python guile2.0 ncurses expat xz)
+source=(https://ftp.gnu.org/gnu/gdb/${pkgname}-${pkgver}.tar.xz{,.sig})
+validpgpkeys=('F40ADB902B24264AA42E50BF92EDB04BFF325CF3') # Joel Brobecker
+
+prepare() {
+  cd gdb-$pkgver
+
+  # link isl for in-tree build
+  ln -sv ../isl-${_islver} isl
+
+  # hack! - libiberty configure tests for header files using "$CPP $CPPFLAGS"
+  #sed -i "/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/" libiberty/configure
+
+  ./configure --prefix=/usr --disable-nls \
+              --with-system-readline \
+              --with-python=/usr/bin/python3 \
+              --with-guile=guile-2.0 \
+              --with-system-gdbinit=/etc/gdb/gdbinit
+}
+
+build() {
+  cd gdb-$pkgver
+  make
+}
+
+package_gdb-common() {
+  depends=(python guile2.0)
+
+  cd gdb-$pkgver
+  make -C gdb/data-directory DESTDIR=$pkgdir install
+}
+
+package_gdb() {
+  depends=(ncurses expat xz mpfr gdb-common=$pkgver)
+  backup=(etc/gdb/gdbinit)
+
+  cd gdb-$pkgver
+  make -C gdb DESTDIR=$pkgdir install
+
+  # install "custom" system gdbinit
+  install -dm755 $pkgdir/etc/gdb
+  touch $pkgdir/etc/gdb/gdbinit
+
+  # comes from gdb-common
+  rm -r $pkgdir/usr/share/gdb/
+}
+
+md5sums=('b5a49dbff00d9a87fbe114d14b3101c0'
+         'SKIP')

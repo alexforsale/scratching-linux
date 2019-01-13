@@ -1,0 +1,42 @@
+# -*- mode: sh -*-
+pkgname=gmp
+pkgver=6.1.2
+pkgrel=1
+pkgdesc="A free library for arbitrary precision arithmetic"
+arch=('x86_64')
+url="http://gmplib.org/"
+depends=()
+license=('LGPL3' 'GPL')
+source=(https://gmplib.org/download/gmp/gmp-${pkgver}.tar.xz)
+groups=('lfs-base')
+
+if [[ -n "$(pacman -Ss ^gcc-libs$ 2>/dev/null)" ]];then
+  checkdepends+=( 'gcc-libs')
+fi
+
+prepare(){
+  cd "${pkgname}-${pkgver}"
+  ./configure \
+    --prefix=/usr \
+    --enable-cxx \
+    --disable-static \
+    --docdir=/usr/share/doc/${pkgname}-${pkgver}
+}
+build() {
+  cd "${pkgname}-${pkgver}"
+  make
+  make html
+}
+
+check() {
+  cd "${pkgname}-${pkgver}"
+  make check
+}
+
+package() {
+  cd "${pkgname}-${pkgver}"
+  make DESTDIR="${pkgdir}" install
+  make DESTDIR="${pkgdir}" install-html
+}
+
+md5sums=('f58fa8001d60c4c77595fbbb62b63c1d')

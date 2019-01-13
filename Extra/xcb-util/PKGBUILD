@@ -1,0 +1,43 @@
+#-*-mode:sh-*-
+_pkgname=util
+pkgname=xcb-util
+pkgver=0.4.0.r0.gacf790d
+pkgrel=1
+pkgdesc="Utility libraries for XC Binding"
+arch=('x86_64')
+url="https://xcb.freedesktop.org"
+license=('custom')
+depends=('libxcb>=1.7')
+makedepends=('gperf' 'xorg-util-macros' 'doxygen')
+source=("xcb/util::git://anongit.freedesktop.org/git/xcb/util/")
+sha512sums=('SKIP')
+
+pkgver() {
+  cd "$_pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/$_pkgname.//g"
+}
+
+prepare(){
+  cd "$_pkgname"
+  git submodule update --init
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr --disable-static --with-doxygen
+}
+
+build() {
+  cd "$_pkgname"
+  make
+}
+
+check() {
+  cd "$_pkgname"
+  make check
+}
+
+package() { 
+  cd "$_pkgname"
+  make DESTDIR="${pkgdir}" install
+
+  install -D -m644 COPYING \
+          "${pkgdir}/usr/share/licenses/${pkgname}/COPYING"
+}

@@ -1,0 +1,40 @@
+#-*-mode:sh-*-
+_pkgname=libxtrans
+pkgname=xtrans
+pkgver=1.3.5.r18.gfaa4220
+pkgrel=1
+pkgdesc="X transport library"
+arch=('any')
+license=('custom')
+url="https://xorg.freedesktop.org/"
+options=(!emptydirs)
+depends=('xorg-util-macros')
+source=(xorg/lib/libxtrans::git://anongit.freedesktop.org/git/xorg/lib/libxtrans)
+sha512sums=('SKIP')
+groups=('xorg')
+
+pkgver() {
+  cd "$_pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/${pkgname/-/.}.//g"
+}
+
+prepare(){
+  cd "$_pkgname"
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr 
+}
+
+build() {
+  cd "$_pkgname"
+  make
+}
+
+package() {
+  cd "$_pkgname"
+  make DESTDIR="${pkgdir}" install
+
+  install -Dm644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/COPYING"
+
+  install -m755 -d "${pkgdir}/usr/lib"
+  mv "${pkgdir}/usr/share/pkgconfig" "${pkgdir}/usr/lib/pkgconfig"
+}

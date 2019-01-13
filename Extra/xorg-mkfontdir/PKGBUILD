@@ -1,0 +1,43 @@
+#-*-mode:sh-*-
+_pkgname=mkfontdir
+pkgname=xorg-mkfontdir
+pkgver=1.0.7.r7.g7072e91
+pkgrel=1
+pkgdesc="Create an index of X font files in a directory"
+arch=(any)
+url="https://xorg.freedesktop.org/"
+license=('custom')
+depends=('bash' 'xorg-mkfontscale')
+makedepends=('xorg-util-macros')
+groups=('xorg')
+install=xorg-mkfontdir.install
+source=(xorg/app/mkfontdir::git://anongit.freedesktop.org/git/xorg/app/mkfontdir
+        xorg-mkfontdir.hook
+        xorg-mkfontdir.script)
+
+pkgver() {
+  cd "$_pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/$_pkgname.//g"
+}
+
+prepare(){
+  cd "$_pkgname"
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr
+}
+
+build() {
+  cd "$_pkgname"
+  make
+}
+
+package() {
+  cd "$_pkgname"
+  make DESTDIR="${pkgdir}" install
+  install -Dm644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/COPYING"
+  install -Dm644 ../xorg-mkfontdir.hook "${pkgdir}/usr/share/libalpm/hooks/xorg-mkfontdir.hook"
+  install -D ../xorg-mkfontdir.script "${pkgdir}/usr/share/libalpm/scripts/xorg-mkfontdir"
+}
+sha256sums=('SKIP'
+            '4b43af2f2683aad73ddc01b862a3a3744a2c74c1a8697daaba31a4350d407c02'
+            '06c60e3e46a76b5300c3224cea6b5094556ea712a08ff9a0103be2eb58d222b5')

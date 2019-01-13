@@ -1,0 +1,38 @@
+#-*-mode:sh-*-
+_pkgname=libXfixes
+pkgname=libxfixes
+pkgver=5.0.3.r4.g1e238b4
+pkgrel=1
+pkgdesc="X11 miscellaneous 'fixes' extension library"
+arch=('x86_64')
+url="https://xorg.freedesktop.org/"
+license=('custom')
+depends=('libx11' 'fixesproto')
+makedepends=('xorg-util-macros')
+source=(xorg/lib/libXfixes::git://anongit.freedesktop.org/git/xorg/lib/libXfixes)
+sha256sums=('SKIP')
+groups=('xorg')
+
+pkgver() {
+  cd "$_pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/${_pkgname/-/.}.//g"
+}
+
+prepare(){
+  cd "${srcdir}/$_pkgname"
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr --sysconfdir=/etc --disable-static
+}
+
+build() {
+  cd "${srcdir}/$_pkgname"
+  make
+}
+
+package() {
+  cd "${srcdir}/$_pkgname"
+  make DESTDIR="${pkgdir}" install
+
+  install -m755 -d "${pkgdir}/usr/share/licenses/${pkgname}"
+  install -m644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/"
+}

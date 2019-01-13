@@ -1,0 +1,43 @@
+#-*-mode:sh-*-
+pkgname=libxshmfence
+pkgver=1.3.r2.g87a66f2
+pkgrel=1
+pkgdesc="a library that exposes a event API on top of Linux futexes"
+arch=('x86_64')
+url="https://xorg.freedesktop.org/"
+license=('GPL')
+#groups=()
+depends=('glibc')
+makedepends=('xorg-util-macros' 'xproto')
+source=(xorg/lib/libxshmfence::git://anongit.freedesktop.org/git/xorg/lib/libxshmfence)
+sha512sums=('SKIP')
+groups=('xorg')
+
+pkgver() {
+  cd "$pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/${pkgname/-/.}.//g"
+}
+
+prepare(){
+  cd $pkgname
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr
+
+}
+
+build() {
+  cd $pkgname
+  make
+}
+
+check() {
+  cd $pkgname
+  make -k check
+}
+
+package() {
+  cd $pkgname
+  make DESTDIR="$pkgdir/" install
+  install -m755 -d "${pkgdir}/usr/share/licenses/${pkgname}"
+  install -m644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/"
+}

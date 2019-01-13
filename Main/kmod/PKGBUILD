@@ -1,0 +1,93 @@
+#-*- mode:sh -*-
+pkgname=kmod
+pkgver=25
+pkgrel=1
+pkgdesc="Linux kernel module management tools and library"
+arch=('x86_64')
+url='http://git.kernel.org/?p=utils/kernel/kmod/kmod.git;a=summary'
+license=('GPL2')
+depends=('glibc' 'zlib' 'xz')
+makedepends=()
+checkdepends=()
+options=('strip')
+provides=('module-init-tools=3.16' 'libkmod.so')
+conflicts=('module-init-tools')
+replaces=('module-init-tools')
+validpgpkeys=('EAB33C9690013C733916AC839BA2A5A630CBEA53')  # Lucas DeMarchi
+source=("https://www.kernel.org/pub/linux/utils/kernel/$pkgname/$pkgname-$pkgver.tar.xz"
+        "depmod-search.conf")
+groups=('lfs-base')
+
+_confargs=()
+if [[ -n "$(pacman -Ss ^gtk-doc$ 2>/dev/null)" ]];then
+  _confargs+=( '--enable-gtk-doc')
+  makedepends+=( 'gtk-doc')
+else
+  optdepends+=( 'gtk-doc')
+  _confargs+=( '--disable-gtk-doc')
+fi
+if [[ -n "$(pacman -Ss ^linux-headers$ 2>/dev/null)" ]];then
+  checkdepends+=( 'linux-headers')
+else
+  optdepends+=( 'linux-headers')
+fi
+if [[ -n "$(pacman -Ss ^libelf$ 2>/dev/null)" ]];then
+  checkdepends+=( 'libelf')
+else
+  optdepends+=( 'libelf')
+fi
+
+prepare(){
+  cd "$pkgname-$pkgver"
+  ./configure \
+    --prefix=/usr \
+    --with-rootlibdir=/lib \
+    --sysconfdir=/etc \
+    --with-xz \
+    --bindir=/bin \
+    --with-zlib ${_confargs[@]}
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+  make
+}
+
+check() {
+  # As of kmod v20, the test suite needs to build some kernel modules, and thus
+  # needs headers available in order to run. We depend on linux-headers, but
+  # this is really only to try and make sure that *some* useable tree of kernel
+  # headers exist. The first useable tree we find is good enough, as these
+  # modules will never be loaded by tests.
+
+  local kdirs=(/lib/modules/*/build/Makefile)
+  if [[ ! -f ${kdirs[0]} ]]; then
+    printf '==> Unable to find kernel headers to build modules for tests\n' >&2
+    return 1
+  fi
+
+  local kver kdir=${kdirs[0]%/Makefile}
+  IFS=/ read _ _ _ kver _ <<<"$kdir"
+
+  make -C "$pkgname-$pkgver" check KDIR="$kdir" KVER="$kver"
+}
+
+package() {
+  make -C "$pkgname-$pkgver" DESTDIR="$pkgdir" install
+
+  # extra directories
+  install -v -dm755 "$pkgdir"/{etc,lib}/{depmod,modprobe}.d
+  install -v -dm755 "$pkgdir"/{bin,sbin}
+
+  for target in depmod insmod lsmod modinfo modprobe rmmod; do
+    ln -sfv ../bin/kmod "$pkgdir"/sbin/$target
+  done
+
+  ln -sv kmod "$pkgdir"/bin/lsmod
+  
+  # install depmod.d file for search/ dir
+  install -Dm644 "$srcdir/depmod-search.conf" "$pkgdir/lib/depmod.d/search.conf"
+}
+
+md5sums=('34f325cab568f842fdde4f8b2182f220'
+         'dd62cbf62bd8f212f51ef8c43bec9a77')

@@ -1,0 +1,94 @@
+# -*- mode: sh -*-
+pkgbase=ncurses
+pkgname=(ncurses ncurses5-compat-libs)
+pkgver=6.1
+pkgrel=1
+pkgdesc='System V Release 4.0 curses emulation library'
+arch=(x86_64)
+url='http://invisible-island.net/ncurses/ncurses.html'
+license=(MIT)
+depends=(glibc gcc-libs)
+source=(https://ftp.gnu.org/pub/gnu/ncurses/ncurses-$pkgver.tar.gz)
+groups=('lfs-base')
+
+prepare(){
+  mkdir -pv compat-libs ncurses
+  
+  cd $pkgbase-$pkgver
+  cd ${srcdir}/ncurses
+  ../$pkgbase-$pkgver/configure \
+    --prefix=/usr \
+    --mandir=/usr/share/man \
+    --with-shared \
+    --without-normal \
+    --without-debug \
+    --enable-widec \
+    --enable-pc-files \
+    --with-cxx-binding \
+    --with-pkg-config-libdir=/usr/lib/pkgconfig \
+    --with-cxx-shared
+  
+  cd ${srcdir}/compat-libs
+  ../${pkgbase}-${pkgver}/configure \
+     --prefix=/usr \
+     --with-shared \
+     --without-ada \
+     --without-normal \
+     --without-debug \
+     --without-cxx-binding \
+     --with-abi-version=5
+}
+
+build() {
+  cd ${srcdir}/ncurses
+  make
+
+  cd ${srcdir}/compat-libs
+  make
+}
+
+package_ncurses() {
+  provides=(libncurses++w.so libformw.so libmenuw.so libpanelw.so libncursesw.so)
+  
+  cd ${srcdir}/ncurses
+  make DESTDIR="$pkgdir" install
+  install -Dm644 ${srcdir}/${pkgbase}-${pkgver}/COPYING "$pkgdir/usr/share/licenses/$pkgbase/LICENSE"
+
+  install -v -dm755 ${pkgdir}/lib
+  mv -v ${pkgdir}/usr/lib/libncursesw.so.6* ${pkgdir}/lib
+  ln -sfv ../../lib/$(readlink ${pkgdir}/usr/lib/libncursesw.so) ${pkgdir}/usr/lib/libncursesw.so
+
+  for lib in ncurses ncurses++ form panel menu ; do
+    rm -vf ${pkgdir}/usr/lib/lib${lib}.so
+    echo "INPUT(-l${lib}w)" > ${pkgdir}/usr/lib/lib${lib}.so
+    ln -sfv ${lib}w.pc ${pkgdir}/usr/lib/pkgconfig/${lib}.pc
+  done
+
+  for lib in tic tinfo; do
+    echo "INPUT(libncursesw.so.${pkgver:0:1})" > "$pkgdir/usr/lib/lib${lib}.so"
+    ln -s libncursesw.so.${pkgver:0:1} "$pkgdir/usr/lib/lib${lib}.so.${pkgver:0:1}"
+  done
+
+  # some packages look for -lcurses during build
+  echo 'INPUT(-lncursesw)' > "$pkgdir/usr/lib/libcursesw.so"
+  ln -s libncurses.so "$pkgdir/usr/lib/libcurses.so"
+}
+
+package_ncurses5-compat-libs(){
+  pkgdesc='System V Release 4.0 curses emulation library, ABI 5'
+  provides=(libtinfo5)
+
+  cd ${srcdir}/compat-libs
+  make DESTDIR="$pkgdir" install.libs
+  install -Dm644 ${srcdir}/ncurses-6.1/COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  rm -rf "$pkgdir/usr/include/" "$pkgdir/usr/lib/pkgconfig" \
+     "$pkgdir"/usr/lib/*.so
+  
+  for lib in ncurses ncurses++ form panel menu; do
+    ln -s lib${lib}.so.5 "$pkgdir/usr/lib/lib${lib}w.so.5"
+  done
+  ln -s libncurses.so.5 "$pkgdir/usr/lib/libtinfo.so.5"
+  ln -s libncurses.so.5 "$pkgdir/usr/lib/libtic.so.5"
+}
+
+md5sums=('98c889aaf8d23910d2b92d65be2e737a')

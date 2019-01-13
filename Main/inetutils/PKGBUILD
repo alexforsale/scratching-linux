@@ -1,0 +1,59 @@
+#-*- mode: sh -*-
+pkgname=inetutils
+pkgver=1.9.4
+pkgrel=1
+pkgdesc="A collection of common network programs"
+arch=('x86_64')
+url="http://www.gnu.org/software/inetutils/"
+license=('GPL3')
+depends=('libcap')
+makedepends=()
+options=('!emptydirs')
+backup=('etc/xinetd.d/telnet' 'etc/xinetd.d/talk')
+source=("https://ftp.gnu.org/gnu/inetutils/${pkgname}-${pkgver}.tar.xz")
+groups=('lfs-base')
+
+_confargs=()
+
+if [[ -n "$(pacman -Ss ^linux-pam$ 2>/dev/null)" ]];then
+  depends+=( 'linux-pam')
+  _confargs+=( '--with-pam')
+else
+  _confargs=( '--without-pam')
+  optdepends+=( 'linux-pam')
+fi
+if [[ -n "$(pacman -Ss ^help2man$ 2>/dev/null)" ]];then
+  makedepends+=( 'help2man')
+else
+  optdepends+=( 'help2man')
+fi
+
+prepare(){
+  cd ${pkgname}-${pkgver}
+  ./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc \
+              --disable-logger --disable-whois --disable-rcp \
+              --disable-rexec --disable-rlogin --disable-rsh \
+              --disable-servers \
+              ${_confargs[@]}
+}
+
+build() {
+  cd ${pkgname}-${pkgver}
+  make
+}
+
+check() {
+  cd ${pkgname}-${pkgver}
+  make check || true
+}
+
+package() {
+  cd ${pkgname}-${pkgver}
+  make DESTDIR="${pkgdir}" install
+
+  install -v -dm755 ${pkgdir}/{bin,sbin}
+  mv -v ${pkgdir}/usr/bin/{hostname,ping,ping6,traceroute} ${pkgdir}/bin
+  mv -v ${pkgdir}/usr/bin/ifconfig ${pkgdir}/sbin
+}
+
+md5sums=('87fef1fa3f603aef11c41dcc097af75e')

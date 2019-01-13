@@ -1,0 +1,46 @@
+#-*-mode:sh-*-
+_pkgname=util-wm
+pkgname=xcb-util-wm
+pkgver=0.4.1.r0.g24eb17d
+pkgrel=1
+pkgdesc="Utility libraries for XC Binding - client and window-manager helpers for ICCCM"
+arch=('x86_64')
+url="https://xcb.freedesktop.org"
+license=('custom')
+depends=('libxcb>=1.7')
+makedepends=('xorg-util-macros' 'doxygen')
+source=("xcb/util-wm::git://anongit.freedesktop.org/git/xcb/util-wm/"
+        'LICENSE')
+
+pkgver() {
+  cd "$_pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/$_pkgname.//g"
+}
+
+prepare(){
+  cd "$_pkgname"
+  git submodule update --init
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr --disable-static --with-doxygen
+}
+
+build() {
+  cd "$_pkgname"
+  make
+}
+
+check() {
+  cd "$_pkgname"
+  make check
+}
+
+package() { 
+  cd "$_pkgname"
+  make DESTDIR="${pkgdir}" install
+
+  install -D -m644 "${srcdir}/LICENSE" \
+          "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}
+
+sha512sums=('SKIP'
+            '18624984f272d8e63d29793ac2241b6104395d33ddb7d7e0607a3013198fdd08eaef0279e321fd3db2551a1fee3a2ae28f5eee8f73ff56c89741ab4778e7a9d4')

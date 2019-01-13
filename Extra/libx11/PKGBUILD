@@ -1,0 +1,43 @@
+#-*-mode:sh-*-
+_pkgname=libX11
+pkgname=libx11
+pkgver=1.6.7.r16.g003e30a6
+pkgrel=1
+pkgdesc="X11 client-side library"
+arch=(x86_64)
+url="https://xorg.freedesktop.org/"
+depends=('libxcb' 'xproto' 'kbproto')
+makedepends=('xorg-util-macros' 'xextproto' 'xtrans' 'inputproto')
+license=('custom')
+source=(xorg/lib/libX11::git://anongit.freedesktop.org/git/xorg/lib/libX11)
+sha256sums=('SKIP')
+groups=('xorg')
+
+pkgver() {
+  cd "$_pkgname"
+  git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' | sed "s/${_pkgname}.//g"
+}
+
+prepare(){
+  cd "${srcdir}/${_pkgname}"
+  NOCONFIGURE=1 ./autogen.sh
+  ./configure --prefix=/usr --disable-static --disable-xf86bigfont
+}
+
+build() {
+  cd "${srcdir}/${_pkgname}"
+  make
+}
+
+check() {
+  cd "${srcdir}/${_pkgname}"
+  make check
+}
+
+package() {
+  cd "${srcdir}/${_pkgname}"
+  make DESTDIR="${pkgdir}" install
+
+  install -d -m755 "${pkgdir}/usr/share/licenses/${pkgname}"
+  install -m644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/"
+}

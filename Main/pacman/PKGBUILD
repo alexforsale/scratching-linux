@@ -1,0 +1,85 @@
+# -*-mode:sh-*-
+# Maintainer: Dan McGee <dan@archlinux.org>
+# Maintainer: Dave Reisner <dreisner@archlinux.org>
+pkgname=pacman
+pkgver=5.1.2
+pkgrel=1
+pkgdesc="A library-based package manager with dependency support"
+arch=('x86_64')
+url="http://www.archlinux.org/pacman/"
+license=('GPL')
+_deps=('libarchive' 'curl' 'gpgme')
+depends=('glibc' 'bash')
+_makedeps=('asciidoc')
+makedepends=()
+_checkdeps=('python2' 'fakechroot')
+checkdepends=()
+optdepends=('perl-locale-gettext: translation support in makepkg-template')
+backup=(etc/pacman.conf etc/makepkg.conf)
+options=('strip' 'debug')
+validpgpkeys=('6645B0A8C7005E78DB1D7864F99FFE0FEAE999BD'  # Allan McRae <allan@archlinux.org>
+              'B8151B117037781095514CA7BBDFFC92306B1121') # Andrew Gregory (pacman) <andrew@archlinux.org>
+source=(https://sources.archlinux.org/other/pacman/$pkgname-$pkgver.tar.gz
+        pacman.conf
+        makepkg.conf)
+groups=('lfs-base')
+
+for _c in "${_checkdeps[@]}";do
+  if [[ -n "$(pacman -Ss "^${_c}$" 2>/dev/null)" ]];then
+    depends+=( "${_c}")
+  else
+    optdepends+=( "${_c}")
+  fi
+done
+for _d in "${_deps[@]}";do
+  if [[ -n "$(pacman -Ss "^${_d}$" 2>/dev/null)" ]];then
+    depends+=( "${_d}")
+  else
+    optdepends+=( "${_d}")
+  fi
+done
+for _m in "${_makedeps[@]}";do
+  if [[ -n "$(pacman -Ss "^${_m}$" 2>/dev/null)" ]];then
+    depends+=( "${_m}")
+  else
+    optdepends+=( "${_m}")
+  fi
+done
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  ./configure --prefix=/usr --sysconfdir=/etc \
+              --localstatedir=/var --enable-doc \
+              --with-scriptlet-shell=/bin/bash \
+              --with-ldconfig=/sbin/ldconfig
+  make V=1
+}
+
+check() {
+  make -C "$pkgname-$pkgver" check
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir" install
+
+  # install Arch specific stuff
+  install -dm755 "$pkgdir/etc"
+  install -m644 "$srcdir/pacman.conf" "$pkgdir/etc"
+  install -m644 "$srcdir/makepkg.conf" "$pkgdir/etc"
+
+  # put bash_completion in the right location
+  install -dm755 "$pkgdir/usr/share/bash-completion/completions"
+  mv "$pkgdir/etc/bash_completion.d/pacman" "$pkgdir/usr/share/bash-completion/completions"
+  rmdir "$pkgdir/etc/bash_completion.d"
+
+  for f in makepkg pacman-key; do
+    ln -s pacman "$pkgdir/usr/share/bash-completion/completions/$f"
+  done
+}
+
+md5sums=('68d559a8f64efce9840efa7c87fc52a3'
+         '60623733d38fcb72c8b2a9c581043b2d'
+         '87b45240f31ab639bb9d8b7204ebee19')

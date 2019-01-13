@@ -1,0 +1,121 @@
+#-*-mode:sh-*-
+pkgname=graphviz
+pkgver=2.40.1
+pkgrel=1
+pkgdesc='Graph visualization software'
+url='http://www.graphviz.org/'
+license=('EPL')
+arch=('x86_64')
+_deps=('librsvg' 'ruby')
+depends=('libltdl' 'gd' 'libxaw' 'ghostscript' 'pango' 'gts' 'gsfonts' 'libnsl')
+_makedeps=('mono' 'r' 'qt4' 'gtk2' 'swig' 'guile''ocaml' 'libwebp' 'poppler' 'ghostscript' 'freetype2')
+makedepends=('lua' 'perl' 'python2' 'tk')
+optdepends=('mono: sharp bindings'
+            'guile: guile bindings'
+            'lua: lua bindings'
+            'ocaml: ocaml bindings'
+            'perl: perl bindings'
+            'python2: python bindings'
+            'r: r bindings'
+            'tcl: tcl bindings'
+            'qt4: gvedit'
+            'gtk2: gtk output plugin'
+            'xterm: vimdot')
+
+# http://www.graphviz.org/Download_source.php
+source=("https://graphviz.gitlab.io/pub/graphviz/stable/SOURCES/graphviz.tar.gz"
+        'ghostscript918.patch')
+sha256sums=('ca5218fade0204d59947126c38439f432853543b0818d9d728c589dfe7f3a421'
+            '0083d126e27f2223ec4226fc1d71c9c84106968a0fdf65de838aee1e4882bfdb')
+install=install
+
+for _d in "${_deps[@]}";do
+  if [[ -n "$(pacman -Ss "^${_d}$" 2>/dev/null)" ]];then
+    depends+=( "${_d}")
+  else
+    optdepends+=( "${_d}")
+  fi
+done
+for _m in "${_makedeps[@]}";do
+  if [[ -n "$(pacman -Ss "^${_m}$" 2>/dev/null)" ]];then
+    depends+=( "${_m}")
+  else
+    optdepends+=( "${_m}")
+  fi
+done
+
+_confargs=( '--prefix=/usr')
+if [[ -n "$(pacman -Qq r 2>/dev/null)" ]];then
+  _confargs+=( "--enable-r=yes")
+else
+  _confargs+=( "--enable-r=no")
+fi
+if [[ -n "$(pacman -Qq swig 2>/dev/null)" ]];then
+  _confargs+=( "--enable-swig=yes")
+else
+  _confargs+=( "--enable-swig=no")
+fi
+if [[ -n "$(pacman -Qq guile 2>/dev/null)" ]];then
+  _confargs+=( "--enable-guile=yes")
+else
+  _confargs+=( "--enable-guile=no")
+fi
+if [[ -n "$(pacman -Qq lua 2>/dev/null)" ]];then
+  _confargs+=( "--enable-lua=yes")
+else
+  _confargs+=( "--enable-lua=no")
+fi
+if [[ -n "$(pacman -Qq ocaml 2>/dev/null)" ]];then
+  _confargs+=( "--enable-ocaml=yes")
+else
+  _confargs+=( "--enable-ocaml=no")
+fi
+if [[ -n "$(pacman -Qq librsvg 2>/dev/null)" ]];then
+  _confargs+=( "--with-rsvg=yes")
+else
+  _confargs+=( "--with-rsvg=no")
+fi
+if [[ -n "$(pacman -Qq libwebp 2>/dev/null)" ]];then
+  _confargs+=( "--with-webp=yes")
+else
+  _confargs+=( "--with-webp=no")
+fi
+if [[ -n "$(pacman -Qq poppler 2>/dev/null)" ]];then
+  _confargs+=( "--with-poppler=yes")
+else
+  _confargs+=( "--with-poppler=no")
+fi
+if [[ -n "$(pacman -Qq ghostscript 2>/dev/null)" ]];then
+  _confargs+=( "--with-ghostscript=yes")
+else
+  _confargs+=( "--with-ghostscript=no")
+fi
+if [[ -n "$(pacman -Qq freetype2 2>/dev/null)" ]];then
+  _confargs+=( "--with-freetype2=yes")
+else
+  _confargs+=( "--with-freetype2=no")
+fi
+
+prepare() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+  patch -p1 -i ../ghostscript918.patch
+}
+
+build() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+  export PYTHON=python2
+  export LIBPOSTFIX=/
+
+  ./configure ${_confargs[@]}
+  make
+}
+
+package() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+  make DESTDIR="${pkgdir}" install
+
+  # Deduplicates TCL libraries
+  cd "${pkgdir}/usr/lib/tcl8.6"
+  rm -fr graphviz
+  ln -s ../graphviz/tcl graphviz
+}
