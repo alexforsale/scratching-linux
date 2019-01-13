@@ -119,4 +119,4 @@ diff -upr source.orig/texk/web2c/luatexdir/lua/lepdflib.cc source/texk/web2c/lua
 +        obj = (StructTreeRoot *) ((PdfDocument *) uin->d)->doc->getStructTreeRoot();
          uout = new_StructTreeRoot_userdata(L);
          uout->d = obj;
-uout->pc = uin->pc;
+         uout->pc = uin->pc;

@@ -2481,4 +2481,4 @@ index ff3f67a16..4aa11db50 100644
 +It is tested up to the poppler 0.70.0.
  POPPLER_VERSION should be defined.
  */
-
+ 
