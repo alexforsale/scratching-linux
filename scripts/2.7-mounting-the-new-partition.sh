@@ -51,6 +51,8 @@ sudo chmod a+wt $LFS/sources
 
 # location for pacman local repo
 [[ ! -d $LFS/srv/pacman/ ]] && sudo mkdir -pv $LFS/srv/pacman/{repos,recipes}
+[[ ! -d $LFS/srv/pacman/repos ]] && sudo mkdir -pv $LFS/srv/pacman/repos
+[[ ! -d $LFS/srv/pacman/recipes ]] && sudo mkdir -pv $LFS/srv/pacman/recipes
 
 # mount bind $SCRIPTDIR/recipes
 if [[ -z "$(mount | grep $LFS/srv/pacman/recipes)" ]];then
