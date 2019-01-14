@@ -1,0 +1,634 @@
+#-*-mode:sh-*-
+pkgbase=qt5
+pkgver=5.12.0.r110.g6930998
+pkgrel=1
+arch=(x86_64)
+_submodules=('qt3d' 'qtactiveqt' 'qtandroidextras' 'qtbase' 'qtcanvas3d' 'qtcharts' 'qtconnectivity'
+             'qtdatavis3d' 'qtdeclarative' 'qtdoc' 'qtdocgallery' 'qtfeedback' 'qtgamepad' 'qtgraphicaleffects'
+             'qtimageformats' 'qtlocation' 'qtmacextras' 'qtmultimedia' 'qtnetworkauth' 'qtpim' 'qtpurchasing'
+             'qtqa' 'qtquickcontrols' 'qtquickcontrols2' 'qtremoteobjects' 'qtrepotools' 'qtscript' 'qtscxml' 'qtsensors'
+             'qtserialbus' 'qtserialport' 'qtspeech' 'qtsvg' 'qtsystems' 'qttools' 'qttranslations' 'qtvirtualkeyboard'
+             'qtwayland' 'qtwebchannel' 'qtwebengine' 'qtwebglplugin' 'qtwebsockets' 'qtwebview' 'qtwinextras' 'qtx11extras'
+             'qtxmlpatterns')
+_additionmodules=('qtdeclarative-testsuites' 'qtlocation-mapboxgl' 'qtxmlpatterns-testsuites')
+url="code.qt.io"
+license=('GPL3' 'LGPL3' 'FDL' 'custom')
+groups=('qt' 'qt5')
+source=(${pkgbase}/${pkgbase}::git://code.qt.io/qt/${pkgbase}.git)
+md5sums=('SKIP')
+makedepends=('git')
+# per modules dependencies
+_qtbase_deps=('libjpeg-turbo' 'xcb-util-keysyms' 'xcb-util-renderutil' 'libgl' 'fontconfig' 'xdg-utils'
+              'shared-mime-info' 'xcb-util-wm' 'libxrender' 'libxi' 'sqlite' 'xcb-util-image' 'mesa'
+              'tslib' 'libinput' 'libxkbcommon-x11' 'libproxy' 'libcups' 'double-conversion')
+_qtbase_makedeps=('libfbclient' 'libmariadbclient' 'sqlite' 'unixodbc' 'postgresql-libs' 'alsa-lib' 'gst-plugins-base-libs'
+                  'gtk3' 'libpulse' 'cups' 'freetds' 'vulkan-headers')
+_qtbase_optdeps=('qt5-svg: to use SVG icon themes'
+                 'postgresql-libs: PostgreSQL driver'
+                 'libmariadbclient: MariaDB driver'
+                 'unixodbc: ODBC driver'
+                 'libfbclient: Firebird/iBase driver'
+                 'freetds: MS SQL driver'
+                 'gtk3: GTK platform plugin')
+_qt3d_deps=('qt5-declarative' 'assimp')
+_qtcanvas3d_deps=('qt5-declarative')
+_qtcharts_deps=('qt5-declarative')
+_qtconnectivity_deps=('qt5-base' 'bluez-libs')
+_qtconnectivity_makedeps=('qt5-declarative')
+_qtconnectivity_optdeps=('qt5-declarative: QML bindings')
+_qtdatavis3d_deps=('qt5-base')
+_qtdatavis3d_makedeps=('qt5-declarative')
+_qtdatavis3d_optdeps=('qt5-declarative: QML bindings')
+_qtdeclarative_deps=('qt5-base')
+_qtdeclarative_makedeps=('python')
+_qtdoc_deps=('qt5-base')
+_qtdoc_makedeps=('qt5-tools' 'python2' 'pciutils' 'libxtst' 'libxcursor' 'libxrandr' 'libxss' 'libxcomposite'
+                 'gperf' 'nss' 'clang')
+_examples_deps=('qt5-doc')
+_qtfeedback_deps=('qt5-declarative')
+_qtgamepad_deps=('qt5-base' 'sdl2')
+_qtgamepad_makedeps=('qt5-declarative')
+_qtgamepad_optdeps=('qt5-declarative: QML bindings')
+_qtgraphicaleffects_deps=('qt5-declarative')
+_qtimageformats_deps=('qt5-base' 'jasper' 'libmng' 'libwebp')
+_qtlocation_deps=('qt5-declarative')
+_qtmultimedia_deps=('qt5-base' 'gst-plugins-base' 'libpulse' 'openal')
+_qtmultimedia_makedeps=('qt5-declarative' 'gst-plugins-bad')
+_qtmultimedia_optdeps=('qt5-declarative: QML bindings' 'gst-plugins-good: camera support, additional plugins'
+                       'gst-plugins-bad: camera support, additional plugins' 'gst-plugins-ugly: additional plugins'
+                       'gst-libav: ffmpeg plugin')
+_qtnetworkauth_deps=('qt5-base')
+_qtquickcontrols_deps=('qt5-declarative')
+_qtquickcontrols2_deps=('qt5-declarative')
+_qtquickcontrols2_optdeps=('qt5-graphicaleffects: for the Material style')
+_qtremoteobjects_deps=('qt5-base')
+_qtremoteobjects_makedeps=('qt5-declarative')
+_qtremoteobjects_optdeps=('qt5-declarative: QML bindings')
+_qtscript_deps=('qt5-base')
+_qtscxml_deps=('qt5-declarative')
+_qtsensors_deps=('qt5-base')
+_qtsensors_makedeps=('qt5-declarative')
+_qtsensors_optdeps=('qt5-declarative: QML bindings')
+_qtserialbus_deps=('qt5-serialport')
+_qtserialport_deps=('qt5-base')
+_qtspeech_deps=('qt5-multimedia')
+_qtspeech_makedeps=('flite' 'speech-dispatcher')
+_qtspeech_optdeps=('flite: flite TTS backend' 'speech-dispatcher: speech-dispatcher TTS backend')
+_qtsvg_deps=('qt5-base')
+_qtsystems_deps=('qt5-declarative')
+_qttools_deps=('qt5-base' 'hicolor-icon-theme')
+_qttools_makedeps=('qt5-declarative' 'vulkan-headers' 'clang' 'qt5-webkit')
+_qttools_optdeps=('clang: for qdoc' 'qt5-webkit: for Qt Assistant')
+_qttranslations_deps=('qt5-base')
+_qttranslations_makedeps=('qt5-tools')
+_qtvirtualkeyboard_deps=('qt5-declarative' 'qt5-svg' 'hunspell')
+_qtwayland_deps=('qt5-declarative' 'libxcomposite' 'wayland')
+_qtwebchannel_deps=('qt5-declarative')
+_qtwebengine_deps=('qt5-webchannel' 'qt5-location' 'libxcomposite' 'libxrandr' 'pciutils' 'libxss'
+                   'libevent' 'snappy' 'nss' 'libxslt' 'minizip' 'ffmpeg' 're2' 'libvpx')
+_qtwebengine_makedeps=('python2' 'gperf' 'jsoncpp' 'ninja' 'qt5-tools' 'poppler')
+_qtwebglplugin_deps=('qt5-websockets' 'qt5-declarative')
+_qtwebsockets_deps=('qt5-base')
+_qtwebsockets_makedeps=('qt5-declarative')
+_qtwebsockets_optdeps=('qt5-declarative: QML bindings')
+_qtwebview_deps=('qt5-webengine')
+_qtx11extras_deps=('qt5-base')
+_qtxmlpatterns_deps=('qt5-base')
+_qtxmlpatterns_makedeps=('qt5-declarative')
+_qtxmlpatterns_optdeps=('qt5-declarative: QML bindings')
+
+# all package name
+_allpackage=('qt3d' 'qtbase' 'qtcanvas3d' 'qtcharts' 'qtconnectivity' 'qtdataviz3d' 'qtdeclarative' 'qtdoc' 'qtfeedback'
+             'qtgamepad' 'qtgraphicaleffects' 'qtimageformats' 'qtlocation' 'qtmultimedia' 'qtnetworkauth' 'qtquickcontrols'
+             'qtquickcontrols2' 'qtremoteobjects' 'qtscript' 'qtscxml' 'qtsensors' 'qtserialbus' 'qtserialport' 'qtspeech'
+             'qtsvg' 'qtsystems' 'qttools' 'qttranslations' 'qtvirtualkeyboard' 'qtwayland' 'qtwebchannel' 'qtwebengine'
+             'qtwebglplugin' 'qtwebsockets' 'qtwebview' 'qtx11extras' 'qtxmlpatterns')
+
+pkgname=(${_allpackage[@]/qt/qt5-/})
+pkgname+=( 'qt5-xcb-private-headers')
+# all package deps
+OLDIFS="$IFS"
+IFS=$'\n'
+_alldeps=(`for ad in "${_qtbase_deps[@]}" "${_qt3d_deps[@]}" "${_qtcanvas3d_deps[@]}" "${_qtcharts_deps[@]}" "${_qtconnectivity_deps[@]}" \
+               "${_qtdatavis3d_deps[@]}" "${_qtdeclarative_deps[@]}" "${_qtdoc_deps[@]}" "${_examples_deps[@]}" "${_qtfeedback_deps[@]}" \
+               "${_qtgamepad_deps[@]}" "${_qtgraphicaleffects_deps[@]}" "${_qtimageformats_deps[@]}" "${_qtlocation_deps[@]}" \
+               "${_qtmultimedia_deps[@]}" "${_qtnetworkauth_deps[@]}" "${_qtquickcontrols_deps[@]}" "${_qtquickcontrols2_deps[@]}" \
+               "${_qtremoteobjects_deps[@]}" "${_qtscript_deps[@]}" "${_qtscxml_deps[@]}" "${_qtsensors_deps[@]}" "${_qtserialbus_deps[@]}" \
+               "${_qtserialport_deps[@]}" "${_qtspeech_deps[@]}" "${_qtsvg_deps[@]}" "${_qtsystems_deps[@]}" "${_qttools_deps[@]}" \
+               "${_qttranslations_deps[@]}" "${_qtvirtualkeyboard_deps[@]}" "${_qtwayland_deps[@]}" "${_qtwebchannel_deps[@]}" \
+               "${_qtwebengine_deps[@]}" "${_qtwebglplugin_deps[@]}" "${_qtwebsockets_deps[@]}" "${_qtwebview_deps[@]}" \
+               "${_qtx11extras_deps[@]}" "${_qtxmlpatterns_deps[@]}"; do echo "$ad"; done | sort -du`)
+_allmakedeps=(`for am in "${_qtbase_makedeps[@]}" "${_qtconnectivity_makedeps[@]}" "${_qtdatavis3d_makedeps[@]}" \
+                     "${_qtdeclarative_makedeps[@]}" "${_qtdoc_makedeps[@]}" "${_qtgamepad_makedeps[@]}" "${_qtmultimedia_makedeps[@]}" \
+                     "${_qtremoteobjects_makedeps[@]}" "${_qtsensors_makedeps[@]}" "${_qtspeech_makedeps[@]}" "${_qttools_makedeps[@]}" \
+                     "${_qttranslations_makedeps[@]}" "${_qtwebengine_makedeps[@]}" "${_qtwebsockets_makedeps[@]}"  \
+                     "${_qtxmlpatterns_makedeps[@]}"; do echo "$am"; done | sort -du`)
+IFS="$OLDIFS"
+
+depends=()
+makedepends=()
+_confargs=()
+for _d in ${_alldeps[@]};do
+    if [[ -n "$(pacman -Ss ^${_d}$ 2>/dev/null)" ]];then
+        depends+=( "${_d}")
+    fi
+done
+for _m in ${_allmakedeps[@]};do
+    if [[ -n "$(pacman -Ss ^${_m}$ 2>/dev/null)" ]];then
+        makedepends+=( "${_m}")
+    fi
+done
+
+for s in ${_submodules[@]}; do
+    source+=( "${pkgbase}/${s}::git://${url}/qt/${s}.git")
+    md5sums+=( 'SKIP')
+done
+for a in ${_additionmodules[@]};do
+    source+=( "${pkgbase}/${a}::git://${url}/qt/${a}.git")
+    md5sums+=( 'SKIP')
+done
+
+QT5PREFIX=/opt/qt5
+
+pkgver(){
+    cd ${pkgbase}
+    git describe --long | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare(){
+    cd ${pkgbase}
+    for s in ${_submodules[@]};do
+        git config submodule.${s}.url $srcdir/${s}
+        git submodule update --init ${s}
+        case $s in
+            'qtdeclarative')
+                git config submodule.${s}.url $srcdir/${s}
+                git submodule update --init ${s}
+                pushd ${srcdir}/$s
+                git config submodule.tests/auto/qml/ecmascripttests/test262.url $srcdir/qtdeclarative-testsuites
+                git submodule update --init tests/auto/qml/ecmascripttests/test262
+                popd
+                ;;
+            'qtlocation')
+                git config submodule.${s}.url $srcdir/${s}
+                git submodule update --init ${s}
+                pushd ${srcdir}/$s
+                git config submodule.src/3rdparty/mapbox-gl-native.url $srcdir/qtlocation-mapboxgl
+                git submodule update --init src/3rdparty/mapbox-gl-native
+                popd
+                ;;
+            'qtxmlpatterns')
+                git config submodule.${s}.url $srcdir/${s}
+                git submodule update --init ${s}
+                pushd ${srcdir}/$s
+                git config submodule.testsuites.url $srcdir/qtxmlpatterns-testsuites
+                git submodule update --init tests/auto/3rdparty/testsuites
+                popd
+                ;;
+        esac                
+    done
+
+    cd ${srcdir}
+    mkdir -pv build && cd $_
+    ../qt5/configure -prefix $QT5PREFIX \
+                -confirm-license -opensource -v \
+                -sysconfdir /etc/xdg \
+                -dbus-linked \
+                -openssl-linked \
+                -system-harfbuzz \
+                -system-sqlite \
+                -no-rpath \
+                -shared \
+                -skip qtactiveqt \
+                -skip qtandroidextras
+}
+
+build(){
+    cd ${srcdir}/build
+    make
+}
+
+package(){
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} install
+}
+
+package_qt5-base(){
+    pkgdesc='A cross-platform application and UI framework'
+    # qtbase deps
+    for _d in ${_qtbase_deps[@]};do
+        if [[ -n "$(pacman -Ss ^${_d}$ 2>/dev/null)" ]];then
+            depends+=( "${_d}")
+        fi
+    done
+    for _m in ${_qtbase_makedeps[@]};do
+        if [[ -n "$(pacman -Ss ^${_m}$ 2>/dev/null)" ]];then
+            makedepends+=( "${_m}")
+        fi
+    done
+    optdepends=(${_qtbase_optdeps[@]})
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtbase-install_subtargets
+
+    #install -d "$pkgdir"/usr/share/licenses
+    #ln -s /usr/share/licenses/qt5-base "$pkgdir"/usr/share/licenses/${pkgname}
+}
+
+package_qt5-xcb-private-headers() {
+    pkgdesc='Private headers for Qt5 Xcb'
+    depends=("qt5-base=$pkgver")
+
+    cd ${srcdir}/build
+
+    install -d -m755 "$pkgdir"/usr/include/qtxcb-private
+    cp -r src/plugins/platforms/xcb/*.h "$pkgdir"/usr/include/qtxcb-private/
+}
+
+package_qt5-3d(){
+    pkgdesc='C++ and QML APIs for easy inclusion of 3D graphics'
+    for _d in ${_qt3d_deps[@]};do
+        if [[ -n "$(pacman -Ss ^${_d}$ 2>/dev/null)" ]];then
+            depends+=( "${_d}")
+        fi
+    done
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qt3d-install_subtargets
+}
+
+package_qt5-canvas3d(){
+    pkgdesc='A JavaScript 3D rendering API for Qt Quick'
+    depends=('qt5-declarative')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtcanvas3d-install_subtargets
+}
+
+package_qt5-charts(){
+    pkgdesc='Provides a set of easy to use chart components'
+    depends=('qt5-base')
+    makedepends=('qt5-declarative')
+    optdepends=('qt5-declarative: QML bindings')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtcharts-install_subtargets
+}
+
+package_qt5-connectivity(){
+    pkgdesc='Provides access to Bluetooth hardware'
+    for _d in ${_qtconnectivity_deps[@]};do
+        if [[ -n "$(pacman -Ss ^${_d}$ 2>/dev/null)" ]];then
+            depends+=( "${_d}")
+        fi
+    done
+    for _m in ${_qtconnectivity_makedeps[@]};do
+        if [[ -n "$(pacman -Ss ^${_m}$ 2>/dev/null)" ]];then
+            makedepends+=( "${_m}")
+        fi
+    done
+    optdepends=(${_qtconnectivity_optdeps[@]})
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtconnectivity-install_subtargets
+}
+
+package_qt5-datavis3d(){
+    pkgdesc='Qt Data Visualization module'
+    depends=('qt5-base')
+    makedepends=('qt5-declarative')
+    optdepends=('qt5-declarative: QML bindings')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtdatavis3d-install_subtargets
+}
+
+package_qt5-declarative(){
+    pkgdesc='Classes for QML and JavaScript languages'
+    depends=('qt5-base')
+    makedepends=('qt5-tools')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtdeclarative-install_subtargets
+}
+
+package_qt5-doc(){
+    pkgdesc='A cross-platform application and UI framework (Documentation)'
+    depends=('qt5-base')
+    makedepends=('python')
+    for _m in ${_qtdoc_makedeps[@]};do
+        if [[ -n "$(pacman -Ss ^${_m}$ 2>/dev/null)" ]];then
+            makedepends+=( "${_m}")
+        fi
+    done
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} install_docs
+
+    # Fix conflicts with qt5-examples
+    #rm -r "$pkgdir"/usr/share/doc/qt/examples
+}
+
+# wip
+package_qt5-examples(){
+    pkgdesc='Examples and demos from qt5 documentation'
+    depends=('qt5-doc')
+
+    cd ${srcdir}/build
+    #make INSTALL_ROOT=${pkgdir} install_docs
+
+    # Fix conflicts with qt5-examples
+    #rm -r "$pkgdir"/usr/share/doc/qt/examples
+}
+
+package_qt5-feedback(){
+    pkgdesc="Qt Tactile Feedback Add-on Module"
+    depends=('qt5-declarative')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtfeedback-install_subtargets
+}
+
+package_qt5-gamepad(){
+    pkgdesc='Adds support for getting events from gamepad devices'
+    depends=('qt5-base')
+    for _d in ${_qtgamepad_deps[@]};do
+        if [[ -n "$(pacman -Ss ^${_d}$ 2>/dev/null)" ]];then
+            depends+=( "${_d}")
+        fi
+    done
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtgamepad-install_subtargets
+}
+
+package_qt5-graphicaleffects(){
+    pkgdesc='Graphical effects for use with Qt Quick 2'
+    depends=('qt5-declarative')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtgraphicaleffects-install_subtargets
+}
+
+package_qt5-imageformats(){
+    pkgdesc='Plugins for additional image formats: TIFF, MNG, TGA, WBMP'
+    depends=('qt5-base')
+    for _d in ${_qtimageformats_deps[@]};do
+        if [[ -n "$(pacman -Ss ^${_d}$ 2>/dev/null)" ]];then
+            depends+=( "${_d}")
+        fi
+    done
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtimageformats-install_subtargets
+}
+
+package_qt5-location(){
+    pkgdesc='Provides access to position, satellite and area monitoring classes'
+    depends=('qt5-declarative')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtlocation-install_subtargets
+}
+
+package_qt5-multimedia(){
+    pkgdesc='Classes for audio, video, radio and camera functionality'
+    depends=('qt5-declarative')
+    makedepends=('qt5-declarative')
+    for _d in ${_qtmultimedia_deps[@]};do
+        if [[ -n "$(pacman -Ss ^${_d}$ 2>/dev/null)" ]];then
+            depends+=( "${_d}")
+        fi
+    done
+    for _m in ${_qtmultimedia_makedeps[@]};do
+        if [[ -n "$(pacman -Ss ^${_m}$ 2>/dev/null)" ]];then
+            makedepends+=( "${_m}")
+        fi
+    done
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtmultimedia-install_subtargets
+}
+
+package_qt5-networkauth(){
+    pkgdesc='Network authentication module'
+    depends=('qt5-base')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtnetworkauth-install_subtargets
+}
+
+package_qt5-quickcontrols(){
+    pkgdesc='Reusable Qt Quick based UI controls to create classic desktop-style user interfaces'
+    depends=('qt5-declarative')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtquickcontrols-install_subtargets
+}
+
+package_qt5-quickcontrols(){
+    pkgdesc='Next generation user interface controls based on Qt Quick'
+    depends=('qt5-declarative')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtquickcontrols2-install_subtargets
+}
+
+package_qt5-remoteobjects(){
+    pkgdesc='Inter-process communication (IPC) module developed for Qt'
+    depends=('qt5-base')
+    makedepends=('qt5-declarative')
+    optdepends=('qt5-declarative: QML bindings')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtremoteobjects-install_subtargets
+}
+
+package_qt5-script(){
+    pkgdesc='Classes for making Qt applications scriptable. Provided for Qt 4.x compatibility'
+    depends=('qt5-base')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtscript-install_subtargets
+}
+
+package_qt5-scxml(){
+    pkgdesc='Static and runtime integration of SCXML models into Qt code'
+    depends=('qt5-declarative')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtscxml-install_subtargets
+}
+
+package_qt5-sensors(){
+    pkgdesc='Provides access to sensor hardware and motion gesture recognition'
+    depends=('qt5-base')
+    makedepends=('qt5-declarative')
+    optdepends=('qt5-declarative: QML bindings')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtsensors-install_subtargets
+}
+
+package_qt5-serialbus(){
+    pkgdesc='Qt module for general purpose serial bus access'
+    depends=('qt5-serialport')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtserialbus-install_subtargets
+}
+
+package_qt5-serialport(){
+    pkgdesc='Provides access to hardware and virtual serial ports'
+    depends=('qt5-base')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtserialport-install_subtargets
+}
+
+package_qt5-speech(){
+    pkgdesc='Qt module to make text to speech and speech recognition easy'
+    depends=('qt5-multimedia')
+    for _m in ${_qtspeech_makedeps[@]};do
+        if [[ -n "$(pacman -Ss ^${_m}$ 2>/dev/null)" ]];then
+            makedepends+=( "${_m}")
+        fi
+    done
+    
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtspeech-install_subtargets
+}
+
+package_qt5-svg(){
+    pkgdesc='Classes for displaying the contents of SVG files'
+    depends=('qt5-base')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtsvg-install_subtargets
+}
+
+package_qt5-systems(){
+    pkgdesc="Qt Publish and Subscribe Add-on Module"
+    depends=('qt5-declarative')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtsystems-install_subtargets
+}
+
+package_qt5-tools(){
+    pkgdesc='A cross-platform application and UI framework (Development Tools, QtHelp)'
+    depends=('qt5-base')
+    for _d in ${_qttools_deps[@]};do
+        if [[ -n "$(pacman -Ss ^${_d}$ 2>/dev/null)" ]];then
+            depends+=( "${_d}")
+        fi
+    done
+    for _m in ${_qttools_makedeps[@]};do
+        if [[ -n "$(pacman -Ss ^${_m}$ 2>/dev/null)" ]];then
+            makedepends+=( "${_m}")
+        fi
+    done
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qttools-install_subtargets
+}
+
+package_qt5-translations(){
+    pkgdesc='A cross-platform application and UI framework (Translations)'
+    depends=('qt5-base')
+    makedepends=('qt5-tools')
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qttranslations-install_subtargets
+}
+
+package_qt5-virtualkeyboard(){
+    pkgdesc='Virtual keyboard framework'
+    depends=('qt5-declarative' 'qt5-svg')
+    for _d in ${_qtvirtualkeyboar_deps[@]};do
+        if [[ -n "$(pacman -Ss ^${_d}$ 2>/dev/null)" ]];then
+            depends+=( "${_d}")
+        fi
+    done
+
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtvirtualkeyboard-install_subtargets
+}
+
+package_qt5-wayland(){
+    pkgdesc='Provides APIs for Wayland'
+    depends=('qt5-declarative' 'libxcomposite' 'wayland')
+    
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtwayland-install_subtargets
+}
+
+package_qt5-webchannel(){
+    pkgdesc='Provides access to QObject or QML objects from HTML clients for seamless integration of Qt applications with HTML/JavaScript clients'
+    depends=('qt5-declarative')
+    
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtwebchannel-install_subtargets
+}
+
+package_qt5-webengine(){
+    pkgdesc='Provides support for web applications using the Chromium browser project'
+    depends=('qt5-webchannel' 'qt5-location')
+    makedepends=('qt5-tools')
+    for _d in ${_qtwebengine_deps[@]};do
+        if [[ -n "$(pacman -Ss ^${_d}$ 2>/dev/null)" ]];then
+            depends+=( "${_d}")
+        fi
+    done
+    for _m in ${_qtwebengine_makedeps[@]};do
+        if [[ -n "$(pacman -Ss ^${_m}$ 2>/dev/null)" ]];then
+            makedepends+=( "${_m}")
+        fi
+    done
+    
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtwebengine-install_subtargets
+}
+
+package_qt5-webglplugin(){
+    pkgdesc='QPA plugin for running an application via a browser using streamed WebGL commands'
+    depends=('qt5-websockets' 'qt5-declarative')
+    
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtwebglplugin-install_subtargets
+}
+
+package_qt5-websockets(){
+    pkgdesc='Provides WebSocket communication compliant with RFC 6455'
+    depends=('qt5-base')
+    makedepends=('qt5-declarative')
+    optdepends=('qt5-declarative: QML bindings')
+    
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtwebsockets-install_subtargets
+}
+
+package_qt5-webview(){
+    pkgdesc='Provides a way to display web content in a QML application'
+    depends=('qt5-webengine')
+    
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtwebview-install_subtargets
+}
+
+package_qt5-x11extras(){
+    pkgdesc='Provides platform-specific APIs for X11'
+    depends=('qt5-base')
+    
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtx11extras-install_subtargets
+}
+package_qt5-xmlpatterns(){
+    pkgdesc='Support for XPath, XQuery, XSLT and XML schema validation'
+    depends=('qt5-base')
+    makedepends=('qt5-declarative')
+    optdepends=('qt5-declarative: QML bindings')
+    
+    cd ${srcdir}/build
+    make INSTALL_ROOT=${pkgdir} module-qtxmlpatterns-install_subtargets
+}
