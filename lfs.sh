@@ -108,7 +108,8 @@ source ${LFS}/etc/makepkg.conf
 source ./PKGBUILD
 sudo chown $USER /sources/build -R
 if [[ ! -f "$LFS/srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz" ]];then
-PKGDEST=$LFS/srv/pacman/repos/Main makepkg --skipinteg
+    sudo chown $USER $LFS/srv/pacman -R
+    PKGDEST=$LFS/srv/pacman/repos/Main makepkg --skipinteg
 #/tools/bin/repo-add --new $LFS/srv/pacman/repos/Main/Main.db.tar.gz \
 #         $LFS/srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz
 popd
