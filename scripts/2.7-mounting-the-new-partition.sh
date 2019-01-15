@@ -23,7 +23,7 @@ fi
 
 # boot
 if [[ -n "${PARTITION_BOOT}" ]];then
-    if [[ -z "$(mount | grep ${PARTITION_BOOT})" ]];then
+    if [[ -z "$(mount | grep ${LFS}/boot)" ]];then
         sudo mount -t ${PARTITION_BOOT_TYPE} -o ${PARTITION_BOOT_OPTS} ${PARTITION_BOOT} ${LFS}/boot
     fi
 fi
