@@ -88,7 +88,7 @@ chroot_lfs(){
          TEST=$TEST \
          /tools/bin/bash --login +h $@
 }
-
+export PACKAGER="pacman <pacman@lfs.localdomain>"
 chroot_lfs_pacman(){
     sudo chroot --userspec=8000:8000 ${LFS} /tools/bin/env -i \
          HOME=/home/pacman \
@@ -97,11 +97,11 @@ chroot_lfs_pacman(){
          PATH=/bin:/usr/bin:/sbin:/usr/sbin:/tools/bin \
          BUILDDIR="$BUILDDIR" \
          SCRIPTDIR=/sources/scripts \
+         PACKAGER=$PACKAGER \
          TEST=$TEST \
          /tools/bin/bash --login +h $@
 }
 export -f chroot_lfs chroot_lfs_pacman
-
 # filesystem
 pushd ${SCRIPTDIR}/recipes/Main/filesystem
 source ${LFS}/etc/makepkg.conf
