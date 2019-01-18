@@ -45,25 +45,25 @@ fi
 
 # Constructing a Temporary System
 # as lfs user
-if [[ ! -f $SCRIPTDIR/tools.tar.xz ]];then
-    if [[ ! -f /sources/build/.strip-done ]];then
-        #     # temporarily chown $LFS/{etc,var} for pacman install
-        sudo install -v -d -m755 $LFS/{etc,var}
-        sudo chown lfs $LFS/{etc,var}
-        su -c "${SCRIPTDIR}/scripts/toolchain/make-toolchain.sh" lfs
-    fi
-elif [[ -f $SCRIPTDIR/tools.tar.xz ]];then
-    if [[ -f /sources/build/.strip-done ]];then
-        pushd $LFS
-        tar -xf $SCRIPTDIR/tools.tar.xz
-    fi
+if [[ ! -f $SCRIPTDIR/tools.tar.xz ]] &&
+       [[ ! -f /sources/build/.strip-done ]];then
+    #     # temporarily chown $LFS/{etc,var} for pacman install
+    sudo install -v -d -m755 $LFS/{etc,var}
+    sudo chown lfs $LFS/{etc,var}
+    su -c "${SCRIPTDIR}/scripts/toolchain/make-toolchain.sh" lfs
+elif [[ -f $SCRIPTDIR/tools.tar.xz ]] &&
+         [[ -f /sources/build/.strip-done ]] &&
+         [[ -z "$(ls -A /tools/* 2>/dev/null)" ]];then
+    pushd $LFS
+    tar -xf $SCRIPTDIR/tools.tar.xz
+    popd
 fi
 
 # 5.36 Changing ownership
 sudo chown -R root:root $LFS/tools
 
 # compress /tools for backup
-if [[ ! -f $SCRIPTDIR/tools.tar.xz ]] && [[ ! -f /sources/build/.strip-done ]];then
+if [[ ! -f $SCRIPTDIR/tools.tar.xz ]] && [[ -f /sources/build/.strip-done ]];then
     pushd $LFS;
     tar -cavf $SCRIPTDIR/tools.tar.xz tools
     popd
