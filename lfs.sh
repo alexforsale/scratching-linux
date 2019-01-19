@@ -97,7 +97,7 @@ chroot_lfs_pacman(){
          PATH=/bin:/usr/bin:/sbin:/usr/sbin:/tools/bin \
          BUILDDIR="$BUILDDIR" \
          SCRIPTDIR=/sources/scripts \
-         PACKAGER=$PACKAGER \
+         PACKAGER="$PACKAGER" \
          TEST=$TEST \
          /tools/bin/bash --login +h $@
 }
