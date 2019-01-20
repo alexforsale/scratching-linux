@@ -198,9 +198,9 @@ new_chroot_lfs /sources/scripts/chroot/7.5-general-network-configuration.sh
 
 # linux kernel
 #cp -v $SCRIPTDIR/kernelconfig.conf /sources/
-if [[ -n "$(mount | grep boot)" ]];then
-    sudo mount --bind /boot $LFS/boot
-fi
+#if [[ -n "$(mount | grep boot)" ]];then
+#    sudo mount --bind /boot $LFS/boot
+#fi
 [[ ! -f $BUILDDIR/.chroot-linux-done ]] &&
     new_chroot_lfs_pacman /sources/scripts/chroot/8.3-linux.sh &&
     new_chroot_lfs /sources/scripts/chroot/8.3-linux.sh
