@@ -19,6 +19,9 @@ new_chroot_lfs_pacman make_package git ${_args[@]}
 new_chroot_lfs_pacman make_package autoconf-archive ${_args[@]} --asdeps
 new_chroot_lfs_pacman make_package dbus ${_args[@]} --asdeps
 
+# adds minizip
+new_chroot_lfs_pacman make_package zlib ${_args[@]} --asdeps
+
 # deps for sshfs
 new_chroot_lfs_pacman make_package fuse3 ${_args[@]} --asdeps
 new_chroot_lfs_pacman make_package glib2 ${_args[@]} --asdeps
