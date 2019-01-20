@@ -166,6 +166,7 @@ new_chroot_lfs_pacman(){
          PATH=/bin:/usr/bin:/sbin:/usr/sbin \
          BUILDDIR="$BUILDDIR" \
          SRCDEST=/sources/scripts \
+         PACKAGER="$PACKAGER" \
          TEST=$TEST \
          /bin/bash --login +h $@
 }
