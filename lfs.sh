@@ -118,7 +118,7 @@ sudo /tools/bin/pacman --root=$LFS --config=$LFS/etc/pacman.conf \
      -U "$LFS/srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz" \
      --overwrite $LFS/etc/group \
      --overwrite $LFS/etc/mtab \
-     --overwrite $LFS/etc/passwd --noconfirm --needed
+     --overwrite $LFS/etc/passwd --noconfirm --needed --force
 fi
 
 sudo chown 8000:8000 $LFS/srv/pacman/repos -R
