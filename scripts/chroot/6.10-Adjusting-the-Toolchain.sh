@@ -21,6 +21,7 @@ if [[ ! -f $BUILDDIR/.chroot-adjust-toolchain-done ]];then
     popd
 
     pushd /tmp
+    set +e
     echo 'int main(){}' > dummy.c
     cc -m64 dummy.c -v -Wl,--verbose -o dummy64 &> dummy.log
     cc -m32 dummy.c -v -Wl,--verbose -o dummy32 &>> dummy.log
