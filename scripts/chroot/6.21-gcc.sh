@@ -28,6 +28,7 @@ case ${UID} in
                 exit 0
                 ;;
             post-install)
+                set +e
                 pushd /tmp
 
                 echo 'int main(){}' > dummy.c
@@ -48,7 +49,8 @@ case ${UID} in
                 rm -fv dummy.c dummy{32,64} dummy.log
 
                 popd
-                exit 0                
+                exit 0
+                ;;
         esac
         pushd /srv/pacman/recipes/Main/gcc
         . PKGBUILD
