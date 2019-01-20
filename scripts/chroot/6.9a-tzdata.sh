@@ -23,9 +23,9 @@ case ${UID} in
         case $1 in
             post-install)
                 if [[ ! -f /etc/localtime ]];then
-                    tzselect;
                     ln -s /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
                     locale-gen
+                    echo "LANG=en_US.UTF-8" >> /etc/locale.conf
                 fi
                 exit 0
                 ;;
