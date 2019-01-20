@@ -88,7 +88,7 @@ chroot_lfs(){
          TEST=$TEST \
          /tools/bin/bash --login +h $@
 }
-export PACKAGER="pacman <pacman@lfs.localdomain>"
+export PACKAGER="\"pacman <pacman@lfs.localdomain>\""
 chroot_lfs_pacman(){
     sudo chroot --userspec=8000:8000 ${LFS} /tools/bin/env -i \
          HOME=/home/pacman \
