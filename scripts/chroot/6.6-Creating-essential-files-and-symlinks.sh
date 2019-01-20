@@ -109,3 +109,6 @@ if [[ ! -f $BUILDDIR/.local-repo-done ]];then
     popd
     touch $BUILDDIR/.local-repo-done
 fi
+
+# permission fixes
+chown -v root.root /var/{cache,lib}
