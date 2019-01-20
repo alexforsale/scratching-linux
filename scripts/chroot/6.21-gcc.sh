@@ -9,7 +9,9 @@ case ${UID} in
         . PKGBUILD
         if [[ ! -f /srv/pacman/repos/Main/${pkgname}-${pkgver}-${pkgrel}-${arch}.pkg.tar.xz ]];then
             PKGDEST=/srv/pacman/repos/Main \
-                   SRCDEST=/sources makepkg --skipinteg --nocheck --clean --cleanbuild --needed
+                   SRCDEST=/sources \
+                   _BUILD_ADA=1 _BUILD_FORTRAN=1 _BUILD_GO=1 _BUILD_OBJC=1 \
+                   makepkg --skipinteg --nocheck --clean --cleanbuild --needed
         fi
 #        for p in ${pkgname[@]};do
 #            if [[ -z "$(pacman -Ss ^${p}$)" ]];then
