@@ -52,10 +52,15 @@ if [[ ! -f $SCRIPTDIR/tools.tar.xz ]] &&
     sudo chown lfs $LFS/{etc,var}
     su -c "${SCRIPTDIR}/scripts/toolchain/make-toolchain.sh" lfs
 elif [[ -f $SCRIPTDIR/tools.tar.xz ]] &&
-         [[ -f /sources/build/.strip-done ]] &&
          [[ -z "$(ls -A /tools/* 2>/dev/null)" ]];then
     pushd $LFS
-    tar -xf $SCRIPTDIR/tools.tar.xz
+    sudo tar -xf $SCRIPTDIR/tools.tar.xz
+    sudo chown lfs $LFS/tools -Rv
+    sudo install -vdm755 $LFS/{var,etc,usr}
+    sudo chown lfs:lfs $LFS/{var,etc,usr}
+    su -c "sh ${SCRIPTDIR}/scripts/toolchain/pacstuffs.sh" lfs
+    sudo chown root:root $LFS/tools -Rv
+    sudo chown root:root $LFS/{var,etc,usr} -Rv
     popd
 fi
 
@@ -141,7 +146,6 @@ sudo cp /etc/resolv.conf $LFS/etc
 
 [[ ! -f $BUILDDIR/.chroot-bash-done ]] &&
     bash /sources/scripts/chroot/make-chroot-1.sh
-
 [[ ! -f $BUILDDIR/.chroot-vim-done ]] &&
     bash /sources/scripts/chroot/make-chroot-2.sh
 # strip done by pacman per apps already 
