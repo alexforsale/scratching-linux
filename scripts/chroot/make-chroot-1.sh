@@ -4,16 +4,11 @@ set -e
 sudo chown 8000:8000 $BUILDDIR -R
 
 chroot_lfs /sources/scripts/chroot/6.6-Creating-essential-files-and-symlinks.sh
-
 chroot_lfs_pacman /sources/scripts/chroot/6.7-linux-api-headers.sh
 chroot_lfs /sources/scripts/chroot/6.7-linux-api-headers.sh
 
 chroot_lfs_pacman /sources/scripts/chroot/6.8-man-pages.sh
 chroot_lfs /sources/scripts/chroot/6.8-man-pages.sh
-
-chroot_lfs /sources/scripts/chroot/6.9-glibc.sh prepare
-chroot_lfs_pacman /sources/scripts/chroot/6.9-glibc.sh
-chroot_lfs /sources/scripts/chroot/6.9-glibc.sh
 
 pushd /sources
 [[ ! -f tzcode2018e.tar.gz ]] &&
@@ -21,6 +16,10 @@ pushd /sources
 popd
 chroot_lfs_pacman /sources/scripts/chroot/6.9a-tzdata.sh
 chroot_lfs /sources/scripts/chroot/6.9a-tzdata.sh
+
+chroot_lfs /sources/scripts/chroot/6.9-glibc.sh prepare
+chroot_lfs_pacman /sources/scripts/chroot/6.9-glibc.sh
+chroot_lfs /sources/scripts/chroot/6.9-glibc.sh
 chroot_lfs /sources/scripts/chroot/6.9a-tzdata.sh post-install
 
 chroot_lfs /sources/scripts/chroot/6.10-Adjusting-the-Toolchain.sh
