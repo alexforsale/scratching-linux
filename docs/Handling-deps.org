@@ -1,0 +1,1191 @@
+#+OPTIONS: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline
+#+OPTIONS: author:t broken-links:nil c:nil creator:nil
+#+OPTIONS: d:(not "LOGBOOK") date:t e:t email:nil f:t inline:t num:t
+#+OPTIONS: p:nil pri:nil prop:nil stat:t tags:t tasks:t tex:t
+#+OPTIONS: timestamp:t title:t toc:t todo:t |:t
+#+TITLE: Handling-deps
+#+DATE: <2019-01-15 Tue>
+#+AUTHOR: Christian Alexander
+#+EMAIL: alexforsale@yahoo.com
+#+LANGUAGE: en
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+#+CREATOR: Emacs 26.1 (Org mode 9.1.9)
+* Initial install dependencies
+The initial environment is very limited, which is why many of the initial software are compiled with little dependencies.
+This is my documentantion of (re-)compiling software to satisfy the needed dependencies. After the installation scripts ended you can chroot into
+the =${LFS}= partition and compile by creating a new user. I made a simple scripts for compiling and adding it to the repository, which is located
+in =/srv/pacman/recipes/scripts/make_package.sh=. For convenience put/symlink it to =/usr/local/bin/= or any other directories within =$PATH=.
+
+At this point all installed packages should be explicitly installed by users or are the required dependency.
+These are the list of packages that can be safely uninstalled (using =pacman -Qent=):
+
+- bc
+- check
+- chrpath
+- flex
+- gperf
+- grub
+- intltool
+- meson
+- minizip
+- ncurses5-compat-libs
+- openldap
+- perl-xml-parser
+- sqlite-analyzer
+- sqlite-doc
+- sqlite-tcl
+- sshfs
+- sysklogd
+- sysvinit
+- vim
+
+These packages should be reinstalled explicitly:
+- bison
+- cyrus-sasl
+- dhcpcd
+- elfutils
+- eudev
+- fakeroot
+- file
+- findutils
+- iproute2
+- kbd
+- lfs-bootscripts
+- lfs-network
+- linux
+- lsb_release
+- make
+- man-db
+- man-pages
+- pacman
+- patch
+- pkg-config
+- procps-ng
+- psmisc
+- sudo
+- filesystem
+
+* Packages
+If you're using the =make_package= scripts, you can set the =makepkg= arguments as a bash variable, so you don't have to type them over again. Also note not all the required dependencies are actually "needed" for the softwar to run, it just sometimes certain software requires their dependencies to have a certain dependency too.
+Change ownership of these directories: =/usr/local/src/{srcdest,packages}=, =/srv/pacman= to the user you use. Also create that user specific =makepkg.conf=
+
+#+BEGIN_SRC shell
+mkdir -pv ~/.config/pacman
+echo "PACKAGER=\"username <email@address>\"" >> .config/pacman/makepkg.conf
+#+END_SRC
+
+#+BEGIN_SRC shell
+_args=(--noconfirm --clean --cleanbuild --syncdeps --rmdeps --nocheck)
+make_package.sh ${pkgname} ${_args[@]}
+# see man makepkg for more info
+#+END_SRC
+** Readline
+Needs recompile since it was build before =ncurses=, and also it's still linked to /tools. Also all packages that depends on readline up to this point must also recompile.
+
+#+BEGIN_SRC shell
+make_package readline ${_args} --force --install
+#+END_SRC
+
+Recompile all packages that depends on =readline=, check it with:
+
+#+BEGIN_SRC shell
+pacman -Qi | grep -B8 readline |less
+#+END_SRC
+- =bash=
+- =bc=
+- =gnupg=
+- =gnutls=
+- =pcre=
+- =sqlite=
+- unixodbc=
+** M4
+=m4= was built before its dependency =bash=.
+** TODO shadow
+All dependencies needed:
+- =acl= (shadow was compiled before)
+- =bash=
+- =linux-pam=
+- =cracklib=
+- =libxslt=
+- =docbook-xsl=
+- =gnome-doc-utils=
+
+** bzip2
+Needed dependency:
+- =bash=
+** pkg-config
+Was built before its dependency =bash=.
+** sed
+Was built before its dependency =gettext=.
+** bison
+Was built before its dependency =bash=.
+** flex
+Was built before its dependency =bash= and =help2man=.
+** grep
+Was built before its dependency =pcre= and =texinfo=.
+** libtool
+Was build before its dependency =tar= and =help2man=.
+** gperf
+Was built before its dependency =texinfo=.
+** inetutils
+Was built before its dependency =linux-pam= and =help2man=.
+** perl
+Was built before its dependency =berkeley-db=.
+** autoconf
+All dependencies needed:
+- =gawk=
+- =diffutils=
+- =help2man=
+- =gcc-fortran= (for check)
+** TODO automake
+All dependencies needed:
+- =gcc-fortran= (for check)
+- =java=
+- =vala=
+- =emacs=
+- =cscope=
+** kmod
+All dependencies needed:
+- =linux-headers=
+- =gtk-doc=
+- =libelf=
+** fakeroot
+depends on =sharutils=, and was installled before its dependency =util-linux=.
+** openssl
+Was built before its dependency =make-ca=.
+** TODO libarchive
+Was built before its dependency =zstd= (needs =gtest=,which depends on =cmake=).
+** TODO python
+compile this after:
+- =python-setuptools= & =python-pip=
+- =tk=
+- =libnsl=
+- =valgrind=
+- =bluez-libs=
+- =gdb=
+- =llvm=
+- =xorg-server-xvfb=
+The same dependencies for =python2=
+** TODO ninja
+Needs =re2c=, and =emacs=.
+** TODO meson
+Needs =python-setuptools=.
+** e2fsprogs
+Was built before its dependency =util-linux=.
+** TODO groff
+Needs:
+- =netpbm=
+- =psutils=
+- =libxaw=
+** TODO grub
+Needs:
+- =device-mapper=
+- =rsync=
+- =freetype2=
+- =ttf-dejavu=
+- =autogen=
+- =device-mapper=
+- =fuse2=
+Also built before its dependency =texinfo= and =help2man=.
+** less
+Was built before its dependency =pcre=.
+** TODO iproute2
+Needs =linux-atm= and =iptables=.
+** kbd
+Was built before its dependency =linux-pam=.
+** TODO make
+Needs =guile=.
+** TODO patch
+Needs =ed=.
+** eudev
+Was built before its dependency =util-linux=.
+** util-linux
+Needs =libcap-ng=, and wab built before its dependency =linux-pam=.
+** man-db
+Needs =libseccomp=
+** vim
+Needs:
+- =libxt=
+- =lua=
+- =racket=
+- =ruby=
+- =cscope=
+- =gtk2=
+- =gpm=
+** krb5
+Needs =keyutils=, was built before its dependency =libldap=.
+** berkeley-db
+Was built before its dependency =sharutils=.
+** linux-pam
+Needs:
+- =w3m=
+- =docbook-xml=
+- =docbook-xsl=
+** TODO pinentry
+Needs:
+- =gtk2=
+- =qt5-base=
+- =gcr=
+** TODO curl
+Needs: 
+- =libpsl=
+** pacman
+- =asciidoc=
+- =fakechroot= (for test)
+** ldns
+- =dnssec-anchors=
+- =libpcap=
+- =doxygen=
+** git
+- =asciidoc=
+- =xmlto=
+- =tk=
+- =pcre2=
+- =perl-error=
+- =perl-mailtools=
+- =libgnome-keyring=
+- =libsecret=
+- =emacs=
+** dbus
+- =xmlto=
+- =docbook-xsl=
+- =yelp-tools=
+- =doxygen=
+- =graphviz=
+** glib2
+- =gtk-doc=
+- =shared-mime-info=
+
+* Compilation list
+- =readline=
+- =bash=
+- =bc=
+- =gnupg=
+- =gnutls=
+- =pcre=
+- =sqlite=
+- =bzip2=
+- =pkg-config=
+- =sed=
+- =bison=
+- =flex=
+- =grep=
+- =libtool=
+- =gperf=
+- =inetutils=
+- =perl=
+- =autoconf=
+- =kmod=
+- =sharutils= (dependency for =fakeroot=)
+- =fakeroot=
+- =openssl=
+- =e2fsprogs=
+- =less=
+- =kbd=
+- =eudev=
+- =libcap-ng=
+- =util-linux=
+- =libseccomp=
+- =man-db=
+- =keyutils=
+- =expect=
+- =dejagnu=
+- =krb5=
+- =berkeley-db=
+- =gpm=
+- =libatomic_ops=
+- =icu=
+- =libxml2=
+- =libxslt=
+- =docbook-xml=
+- =docbook-xsl=
+- =linux-pam=
+- =rarian=
+- =itstool=
+- =yelp-xsl=
+- =yelp-tools=
+- =gnome-common=
+- =gnome-doc-utils=
+- =shadow=
+- =python-packaging=
+- =python-appdirs=
+- =python-six=
+- =python-pyparsing=
+- =python-setuptools=
+- =python-packaging=
+- =python-appdirs=
+- =python-six=
+- =python-pyparsing=
+- =python-setuptools=
+- =docutils=
+- =epydoc=
+- =python-pygments=
+- =cython=
+- =python-lxml=
+- =perl-sgmls=
+- =sgml-common=
+- =docbook-dsssl=
+- =docbook-sgml31=
+- =perl-inc-latest=
+- =perl-module-build=
+- =perl-perl4-corelibs=
+- =xmlto=
+- =opensp=
+- =openjade=
+- =docbook-utils=
+- =lynx=
+- =json-c=
+- =xorg-util-macros=
+- =xorgproto=
+- =xtrans=
+- =xcb-proto=
+- =libxau=
+- =libxdmcp=
+- =libxcb=
+- =libx11=
+- =libpng=
+- =freetype2=
+  Needs to be recompiled since =harfbuzz= was not available.
+- =shared-mime-info=
+- =python-anytree=
+- =gtk-doc=
+- =python-markupsafe=
+- =python2-funcsigs=
+- =python-beaker=
+- =python-mako=
+- =python-jinja=
+- =python-imagesize=
+- =python-sphinxcontrib-websupport=
+- =python-sqlalchemy=
+- =mercurial=
+- =python-whoosh=
+- =python2-typing=
+- =python-chardet=
+- =python-ply=
+- =python-pycparser=
+- =python-cffi=
+- =python2-enum34=
+- =python-pyasn1=
+- =python-idna=
+- =python2-ipaddress=
+- =python-asn1crypto=
+- =python-cryptography=
+- =python-pyopenssl=
+- =python-ndg-httpsclient=
+- =python-pysocks=
+- =python-pbr=
+- =python-mock=
+- =python-urllib3=
+- =python-requests=
+- =python-sphinx=
+- =python-sphinx_rtd_theme=
+- =python-sphinx-alabaster-theme=
+- =python-snowballstemmer=
+- =python-pytz=
+- =python-babel=
+- =gobject-introspection=
+  Without =cairo=.
+- =glib2=
+  With =--force --install= since it's already installed.
+- =gtk-doc=
+  Adds =glib2-docs=
+- =ragel=
+- =harfbuzz=
+  Without its dependencies =graphite=, and =cairo=.
+- =freetype2=
+  With this =freetype2= now has all dependencies.
+- =docbook-sgml=
+- =fontconfig=
+- =libxrender=
+- =libxft=
+- =libxext=
+- =libxscrnsaver=
+- =tk=
+- =xorg-font-util=
+- =libfontenc=
+- =xorg-mkfontscale=
+- =xorg-fonts-encodings=
+- =xorg-mkfontdir=
+- =ttf-dejavu=
+- =libyaml=
+- =libice=
+- =libsm=
+- =libxt=
+- =libxmu=
+- =libxpm=
+- =libxaw=
+- =pixman=
+- =gts=
+- =lzo=
+- =gc=
+- =guile2.0=
+- =gdb=
+- =valgrind=
+  Without =openmpi=.
+- =libnl=
+- =hwids=
+- =pciutils=
+- =numactl=
+- =hwloc=
+  Without =cairo=.
+- =openmpi=
+- =valgrind= (and recompile =openmpi= again for completion).
+- =cairo=
+  Without =librsvg=, =gtk2=, =poppler-glib=, and =libspectre=.
+- =libtirpc=
+  Adds =krb5= as dependency.
+- =libnsl=
+- =libpciaccess=
+- =libdrm=
+- =libxshmfence=
+- =libxxf86vm=
+- =libxfixes=
+- =libxdamage=
+- =wayland=
+  Without =graphviz= and =doxygen=.
+- =wayland-protocols=
+- =libomxil-bellagio=
+- =libunwind=
+  Without =texlive-core=
+- =fribidi=
+- =libdatrie=
+- =libthai=
+- =pango=
+- =lua51=
+- =rrdtool=
+  Without =ruby=
+- =lm_sensors=
+- =libuv=
+- =rhash=
+- =cmake=
+  Without =jsoncpp=, =qt5-base=, and =emacs=
+- =ocaml=
+- =ocaml-findlib=
+- =dune=
+- =ocaml-result=
+- =unzip=
+- =bubblewrap=
+- =opam=
+- =ocamlbuild=
+- =ocaml-topkg=
+- =ocaml-integers=
+- =ocaml-ctypes=
+- =llvm=
+- =compiler-rt=
+- =clang=
+- =lld=
+- =libclc=
+- =libvdpau=
+- =libglvnd=
+  Without =mesa=.
+- =libva=
+  Without =mesa=.
+- =libxrandr=
+- =mesa=
+- =libglvnd=
+  Adds =mesa=
+- =libva=
+ Adds =mesa= and =libgl=
+- Recompile =mesa=
+- =libxi=
+- =glu=
+- =freeglut=
+- =gtest=
+- =zstd=
+- =jbigkit=
+- =perl-io-string=
+- =perl-font-ttf=
+- =perl-sort-versions=
+- =adobe-source-sans-pro-fonts=
+- =xorg-font-utils=
+- =ttf-liberation=
+- =asciidoc=
+- =nasm=
+  Without =ghostscript=
+- =libjpeg-turbo=
+  Without =openjdk=
+- =libtiff=
+- =run-parts=
+- =libpaper=
+- =lcms2=
+- =jbig2dec=
+- =ijs=
+  Without =ghostscript=
+- =hicolor-icon-theme=
+- =xorg-xset=
+- =xdg-utils=
+- =xinetd=
+- =libdaemon=
+- =gobject-introspection=
+  Adds =cairo=
+- =hwloc=
+  Adds =cairo=
+- =xmltoman=
+- =dbus-python=
+- =pycairo=
+- =pygobject=
+- =avahi=
+  Without =qt4=, =pygtk=, =mono=, =gtk-sharp=, =gtk3=, =qt5-base=, =graphviz=, =colord=.
+- =cups=
+- =doxygen=
+  Without =qt5-base= =texlive-core=, =ghostscript=, =texlive-latexextra=, =graphviz=
+- =openjpeg2=
+- =ghostscript=
+  Without =gtk3=
+- =ijs=
+  Adds =ghostscript=
+- =nasm=
+  Adds =ghostscript=
+- =guile=
+- =camlp4=
+- =swig=
+- =giflib=
+- =libwebp=
+- =libcroco=
+- =jasper=
+- =gdk-pixbuf2=
+- =gd=
+- =gsfonts=
+- =lua=
+- =graphviz=
+  Without =mono=, =r= =qt4=, =gtk2=, =ruby=, =librsvg=
+- =ruby=
+  Without =rubygems=
+- =rubygems=
+- =ruby=
+  Adds =rubygems=, needed as =ruby= dependency
+- =graphviz=
+  Adds =ruby=
+- =gyp=
+- =zip=
+- =nspr=
+- =nss=
+- =ruby-rdoc=
+- =ruby-hpricot=
+- =ruby-mustache=
+- =ruby-rdiscount=
+- =ruby-ronn=
+- =rrdtool=
+  Adds =ruby=
+- =vala= 
+  Compile twice since the first one build using =valac= from tarball.
+- =lapack=
+- =python-nose=
+- =python-numpy=
+- =boost=
+- =libgusb=
+- =autoconf2.13=
+- =js52=
+- =polkit=
+- =bash-completion=
+- =dconf=
+- =libxinerama=
+- =libgudev=
+- =ftjam=
+- =argyllcms=
+- =python-fonttools=
+- =graphite=
+  Without =dblatex=
+- =libsigsegv=
+- =t1lib=
+- =zziplib=
+- =potrace=
+- =ffcall=
+- =clisp=
+- =poppler=
+  Without =poppler-data=, =gtk3=, =qt5-base=
+- =harfbuzz=
+  Adds =graphite=
+- =texlive-bin=
+- =texlive-core=
+- =libsoxr=
+- =rtkit=, need to disable systemd on configure
+- =orc=
+- =speexdsp=
+- =tdb=
+- =webrtc-audio-processing=
+- =alsa-lib=
+- =libical=
+- =ell=
+- =bluez=
+- =libogg=
+- =celt=
+- =fftw=
+- =scons=
+- =dbus-c++=
+- =flac=
+- =libvorbis=
+- =libsndfile=
+- =libsamplerate=
+- =libraw1394=
+- =libavc1394=
+- =libconfig=
+- =libiec61883=
+- =mm-common=
+  Without =libsigc++=
+- =libsigc++=
+- =mm-common=
+  Adds =libsigc++=
+- =glibmm=
+- =libxml++=
+- =pyopengl=
+- =python-sip=
+- =xcb-util-keysyms=
+- =xcb-util-renderutil=
+- =xcb-util-wm=
+- =xcb-util=
+- =xcb-util-image=
+- =tslib=
+- =libevdev=
+- =mtdev=
+- =libwacom=
+- =libxkbfile=
+- =xorg-xkbcomp=
+- =xkeyboard-config=
+- =libxkbcommon=
+- =sound-theme-freedesktop=
+- =gstreamer=
+- =libcanberra=
+  Without =libpulse=, =gtk3=, =gtk2=
+- =gcab=
+- =libidn2=
+- =publicsuffix-list=
+- =libpsl=
+- =libproxy=
+  Without =webkit2gtk=, =networkmanager=
+- =gsettings-desktop-schemas=
+- =glib-networking=
+- =libsoup=
+- =snowball=
+- =json-glib=
+- =net-snmp=
+- =libexif=
+- =libgphoto2=
+- =sysfsutils=
+- =v4l-utils=
+  Without =sdl2=, =qt5-base=
+- =perl-file-which=
+- =texlive-latexextra=
+- =libieee1284=
+- =sane=
+- =zsh=
+- =colord=
+- =atk=
+- =audit=
+  Without =python2-audit=, =python-audit= (needs =audit= installed)
+- =audit=
+- =libxtst=
+- =at-spi2-core=
+- =at-spi2-atk=
+- =libepoxy=
+- =graphene=
+- =libsass=
+- =sassc=
+- =libxcursor=
+- =rest=
+- =libxcomposite=
+- =desktop-file-utils=
+- =gtk3=
+  Without =adwaita-icon-theme=, =librsvg=, =gst-plugins-bad=, =papi=
+- =libasyncns=
+- =zita-alsa-pcmi=
+- =zita-resampler=
+- =jack=
+  Without =liffado=
+- =opus=
+- =jack2=
+  Without =liffado=
+- =confuse=
+- =libftdi=
+- =lirc=
+- =sbc=
+- =pulseaudio=
+  Without =rtkit=
+- =freetds=
+- =vulkan-headers=
+- =double-conversion=
+- =libfbclient=
+- =jemalloc=
+- =libaio=
+- =mariadb=
+- =postgresql=
+- =iso-codes=
+- =libxv=
+- =cdparanoia=
+- =libvisual=
+- =libtheora=
+- =cogl=
+- =libinput=
+- =clutter=
+- =sdl=
+- =gst-plugins-base=
+- =dbus-glib=
+- =gconf=
+- =libmng=
+- =flite=
+  This package actually used ${BUILDDIR}, so compile don't compile it with =make_package.sh=
+- =dotconf=
+- =libao=
+- =pcaudiolib=
+- =espeak-ng=
+- =python-xdg=
+- =speech-dispatcher=
+- =libevent=
+- =re2=
+- =snappy=
+- =hunspell=
+- =hunspell-en=
+- =jsoncpp=
+- =assimp=
+- =cldr-emoji-annotation=
+- =unicode-character-database=
+- =unicode-emoji=
+- =rust=
+- =jansson=
+- =ctags=
+- =source-highlight=
+- =texlive-science=
+- =texlive-pictures=
+- =texlive-formatsextra=
+- =dblatex=
+- =gtk-doc=
+  Adds =dblatex= and =source-highlight=
+- =librsvg=
+- =adwaita-icon-theme=
+- =appstream-glib=
+- =cantarell-fonts=
+- =automake-1.14=
+- =gtk2=
+- =libnotify=
+- =pygobject2=
+- =tree=
+- =qt5= suite
+  Compile twice to satisfy dependencies, first without =--clean= and =--cleanbuild=. The second compile with =--noextract= and =--noprepare=.
+- =qt4=
+- =popt=
+- =libdv=
+- =mjpegtools=
+- =grapvhiz=
+  Adds =qt4=, =gtk2=, =librsvg=, =poppler=
+- =doxygen=
+  Adds =qt5-base=
+- =aom=
+- =gsm=
+- =lame=
+- =libmodplug=
+- =opencore-amr=
+- =aspell=
+- =hspell=
+- =libvoikko=
+- =enchant=
+- =extra-cmake-modules=
+- =opencc=
+- =fcitx=
+- =vid.stab=
+- =ghc=
+  This will take a while... and without =haskell-hscolour=
+- =haskell-hscolour=
+- Recompile =ghc=
+- =haskell-hashable=
+- =haskell-integer-logarithms=
+- =haskell-primitive=
+- =haskell-scientific=
+- =haskell-erf=
+- =haskell-random=
+- =haskell-tf-random=
+- =haskell-quickcheck=
+- =haskell-quickcheck-unicode=
+- =haskell-hostname=
+- =haskell-old-locale=
+- =haskell-regex-base=
+- =haskell-regex-posix=
+- =haskell-xml=
+- =haskell-call-stack=
+- =haskell-hunit=
+- =haskell-libxml=
+- =haskell-colour=
+- =haskell-ansi-terminal=
+- =haskell-ansi-wl-pprint=
+- =haskell-test-framework=
+- =haskell-extensible-exceptions=
+- =haskell-test-framework-quickcheck2=
+- =haskell-async=
+- =haskell-clock=
+- =haskell-transformers-compat=
+- =haskell-optparse-applicative=
+- =haskell-tagged=
+- =haskell-unbounded-delays=
+- =haskell-wcwidth=
+- =haskell-tasty=
+- =haskell-pcre-light=
+- =haskell-tasty-hunit=
+- =haskell-tasty-quickcheck=
+- =haskell-hspec-expectations=
+- =haskell-quickcheck-io=
+- =haskell-setenv=
+- =haskell-hspec-meta=
+- =haskell-silently=
+- =haskell-test-framework-hunit=
+- =haskell-exceptions=
+- =haskell-base-compat=
+- =haskell-temporary=
+- =haskell-hspec-core=
+- =haskell-hspec-discover=
+- =haskell-hspec=
+- =haskell-base-orphans=
+- =haskell-vector=
+- =haskell-attoparsec=
+- =haskell-dlist=
+- =haskell-th-abstraction=
+- =haskell-time-locale-compat=
+- =haskell-syb=
+- =haskell-chasingbottoms=
+- =haskell-unordered-containers=
+- =haskell-uuid-types=
+- =haskell-base16-bytestring=
+- =haskell-generic-deriving=
+- =haskell-hashable-time=
+- =haskell-case-insensitive=
+- =haskell-old-time=
+- =haskell-quickcheck-instances=
+- =haskell-aeson=
+- =haskell-cmdargs=
+- =haskell-aeson-pretty=
+- =haskell-split=
+- =haskell-base64-bytestring=
+- =haskell-blaze-builder=
+- =haskell-blaze-markup=
+- =haskell-blaze-html=
+- =cmark-gfm=
+- =haskell-cmark-gfm=
+- =haskell-data-default-class=
+- =haskell-data-default-instances-containers=
+- =haskell-data-default-instances-dlist=
+- =haskell-data-default-instances-old-locale=
+- =haskell-data-default=
+- =haskell-doctemplates=
+- =haskell-glob=
+- =haskell-sop-core=
+- =haskell-generics-sop=
+- =haskell-newtype-generics=
+- =haskell-memotrie=
+- =haskell-charset=
+- =haskell-parsers=
+- =haskell-tasty-golden=
+- =haskell-statevar=
+- =haskell-contravariant=
+- =haskell-distributive=
+- =haskell-cabal-doctest=
+- =haskell-comonad=
+- =haskell-fingertree=
+- =haskell-bifunctors=
+- =haskell-profunctors=
+- =haskell-code-page=
+- =haskell-ghc-paths=
+- =haskell-logging-facade=
+- =haskell-mockery=
+- =haskell-stringbuilder=
+- =haskell-with-location=
+- =haskell-doctest=
+- =haskell-semigroupoids=
+- =haskell-transformers-base=
+- =haskell-free=
+- =haskell-void=
+- =haskell-adjunctions=
+- =haskell-invariant=
+- =haskell-kan-extensions=
+- =haskell-parallel=
+- =haskell-reflection=
+- =haskell-lens=
+- =haskell-reducers=
+- =haskell-utf8-string=
+- =haskell-trifecta=
+- =haskell-tree-diff=
+- =haskell-haddock-library=
+- =haskell-tasty-expected-failure=
+- =haskell-hslua=
+- =haskell-hslua-module-text=
+- =haskell-hsyaml=
+- =haskell-network=
+- =haskell-network-uri=
+- =haskell-vector-algorithms=
+- =haskell-vector-th-unbox=
+- =haskell-math-functions=
+- =haskell-mwc-random=
+- =haskell-base-prelude=
+- =haskell-vector-builder=
+- =haskell-foldl=
+- =haskell-mono-traversable=
+- =haskell-unliftio-core=
+- =haskell-resourcet=
+- =haskell-safe=
+- =haskell-unliftio=
+- =haskell-conduit=
+- =haskell-zlib=
+- =haskell-streaming-commons=
+- =haskell-typed-process=
+- =haskell-conduit-extra=
+- =haskell-http-types=
+- =haskell-httpd-shed=
+- =haskell-cereal=
+- =haskell-entropy=
+- =haskell-crypto-api=
+- =haskell-puremd5=
+- =haskell-vault=
+- =haskell-wai=
+- =haskell-auto-update=
+- =haskell-terminal-size=
+- =haskell-concurrent-output=
+- =haskell-constraints=
+- =haskell-monad-control=
+- =haskell-lifted-base=
+- =happy=
+- =haskell-lexer=
+- =haskell-pretty-show=
+- =haskell-logict=
+- =haskell-smallcheck=
+- =haskell-tasty-smallcheck=
+- =haskell-src-exts=
+- =haskell-tasty-th=
+- =haskell-lifted-async=
+- =haskell-mmorph=
+- =haskell-th-lift=
+- =haskell-wl-pprint-annotated=
+- =haskell-hedgehog=
+- =haskell-tasty-hedgehog=
+- =haskell-bsb-http-chunked=
+- =haskell-http-date=
+- =haskell-network-byte-order=
+- =haskell-psqueues=
+- =haskell-hex=
+- =haskell-word8=
+- =haskell-http2=
+- =haskell-appar=
+- =haskell-byteorder=
+- =haskell-iproute=
+- =haskell-simple-sendfile=
+- =haskell-unix-compat=
+- =haskell-cookie=
+- =haskell-basement=
+- =haskell-foundation=
+- =haskell-memory=
+- =haskell-mime-types=
+- =haskell-http-client=
+- =haskell-warp=
+- =haskell-http=
+- =haskell-byteable=
+- =haskell-socks=
+- =haskell-hourglass=
+- =haskell-asn1-types=
+- =haskell-asn1-encoding=
+- =haskell-cryptonite=
+- =haskell-asn1-parse=
+- =haskell-pem=
+- =haskell-x509=
+- =haskell-x509-store=
+- =haskell-x509-validation=
+- =haskell-tls=
+- =haskell-x509-system=
+- =haskell-connection=
+- =haskell-http-client-tls=
+- =haskell-juicypixels=
+- =haskell-string-qq=
+- =haskell-pandoc-types=
+- =haskell-sha=
+- =haskell-hxt-charproperties=
+- =haskell-hxt-regex-xmlschema=
+- =haskell-hxt-unicode=
+- =haskell-hxt=
+- =haskell-regex-pcre=
+- =haskell-diff=
+- =haskell-skylighting-core=
+- =haskell-skylighting=
+- =haskell-executable-path=
+- =haskell-digest=
+- =haskell-zip-archive=
+- =haskell-bitarray=
+- =haskell-unicode-transforms=
+- =haskell-tagsoup=
+- =haskell-texmath=
+- =haskell-hs-bibutils=
+- =haskell-rfc5051=
+- =haskell-text-icu=
+- =haskell-libyaml=
+- =haskell-raw-strings-qq=
+- =haskell-yaml=
+- =haskell-xml-types=
+- =haskell-xml-conduit=
+- =haskell-data-accessor=
+- =haskell-utility-ht=
+- =haskell-data-accessor-template=
+- =haskell-data-accessor-transformers=
+- =haskell-gitrev=
+- =haskell-open-browser=
+- =haskell-base-unicode-symbols=
+- =haskell-roman-numerals=
+- =pandoc=
+- =pandoc-citeproc=
+- =pandoc-crossref=
+- =libnet=
+- =cpio=
+- =java10-binaryjdk=
+  Needed to compile java
+- =hyphen=
+- =qt5-webkit=
+- =python-pyqt5=
+- =ibus=
+- =sdl2=
+- =libxp=
+- =lksctp-tools=
+- =xorg-luit=
+- =xbitmaps=
+- =libutempter=
+- =xterm=
+- Recompile =graphviz=
+  Adds =gtk{3,2}=, =qt4=
+- =java10-openjdk=
+  Remove =java10-binaryjdk= afterward.
+- =java-common=
+- =java-hamcrest=
+- =junit=
+- =ant=
+- =fastjar=
+- =java8-binaryjdk=
+  Remove all java10 package beforehand and unset ${JAVA_HOME}.
+- =eclipse-ecj=
+- =ccache=
+- =java7-binaryjdk=
+  Remove all java package beforehand and unset ${JAVA_HOME}.
+- =maven=
+- =ant1.9=
+- =rhino=
+- +=java7-openjdk=+
+  +Compile with =_bootstrap=1 makepkg/make_package.sh=, symlink =/usr/bin/cpio= to =/bin=+
+  Broken atm.
+- =java8-openjdk=
+- =cmocka=
+- =libssh=
+- =speex=
+- =libass=
+- =libbluray=
+- =l-smash=
+- =libvpx=
+- =x264=
+  Without =ffmpeg=
+- =x265=
+- =xvidcore=
+- =ffnvcodec-headers=
+- =ladspa=
+- =ffmpeg=
+- =x264=
+  Adds =ffmpeg=, rebuild =ffmpeg=
+- =libmms=
+- =faad2=
+- =libdca=
+- =libdvdcss=
+- =libdvdread=
+- =libdvdnav=
+- =libgme=
+- =libofa=
+- =libsrtp=
+- =rtmpdump=
+- =libmpeg2=
+- =wildmidi=
+- =portaudio=
+- =fluidsynth=
+- =libffado=
+- Recompile =jack2=
+  Adds =libffado=.
+- Recompile =jack=
+  Adds =libffado=.
+- =libmikmod=
+- =apr=
+- =apr-util=
+- =serf=
+- =libutf8proc=
+- =subversion=
+- =smpeg=
+- =sdl_sound=
+- =openal=
+- =chromaprint=
+- =vulkan-icd-loader=
+- =libfdk-aac=
+- =libmp4v2=
+- =faac=
+- =soundtouch=
+- =spandsp=
+- =neon=
+- =libdc1394=
+- =libreplaygain=
+- =libcue=
+- =musepack=
+- =zvbi=
+- =ilmbase=
+- =openexr=
+- =libbs2b=
+- =gssdp=
+- =gupnp=
+- =gupnp-igd=
+- =meson=
+  Update to 0.49.1
+- =libnice=
+- =srt=
+- =vulkan-validation-layers=
+- =libkate=
+- =libtiger=
+- =libglade=
+- =pygtk=
+- =opencl-headers=
+- =ocl-icd=
+- =libwmf=
+- =libraw=
+- =libde265=
+- =libheif=
+- =libraqm=
+- =liblqr=
+- Recompile =ghostscript=
+  Adds =gtk3=
+- =imagemagick=
+- =zbar=
+- =python-isodate=
+- =python-rdflib=
+- =lv2=
+- =serd=
+- =sord=
+- =sratom=
+- =lilv=
+- =gst-plugins-bad=
+- =brotli=
+- =libsecret=
+- =geocode-glib=
+- =libmbim=
+- =libqmi=
+- =libpcap=
+- =ppp=
+- =usb_modeswitch=
+- =modemmanager=
+- =geoclue2=
+- =woff2=
+- =libotf=
+- =m17n-db=
+- =anthy=
+- =m17n-lib=
+- =webkit2gtk=
+- =xaw3d=
+- =emacs=
+  Without =libmagick6=
+- =gsasl=
+- =mailutils=
+- =racket=
+- =cscope=
+- =vim=
+- =btrfs-progs=
+- =dash=
+- =dracut=
+- =os-prober=
+- =papi=
+- =liblouis=
+- =qpdf=
+- =mupdf=
+- =cups-filters=
